@@ -54,7 +54,6 @@ export function Sidebar() {
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Promoters", href: "/projects/promoters", icon: Users },
       { name: "Campaigns", href: "/projects/campaigns", icon: Calendar },
-      { name: "Community Group", href: "/projects/community-groups", icon: UserPlus },
       { name: "Locations", href: "/projects/locations", icon: Map },
       { name: "Data Entry", href: "/projects/data-entry", icon: FileInput },
       { name: "Submissions", href: "/projects/submissions", icon: ClipboardList },
