@@ -66,7 +66,6 @@ export function Sidebar() {
       { name: "My Submissions", href: "/submissions", icon: ClipboardList },
       { name: "Data Entry", href: "/submissions/data-entry", icon: FileInput },
       { name: "Reports", href: "/submissions/reports", icon: PieChart },
-      { name: "Sync Data", href: "/submissions/sync", icon: CheckSquare },
     ],
   }
 
