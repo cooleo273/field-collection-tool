@@ -3,12 +3,18 @@ import { LoginForm } from "@/components/login-form"
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="flex min-h-screen flex-col relative">
+      {/* Background pattern */}
       <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
       
-      <div className="flex-1 flex flex-col space-y-8 md:flex-row md:space-y-0">
-        {/* Left side with hero content */}
-        <div className="flex-1 p-4 md:p-8 flex flex-col justify-center items-center md:items-start md:pl-8 lg:pl-16">
+      <div className="flex-1 flex flex-col md:flex-row">
+        {/* Mobile Header */}
+        <div className="block md:hidden p-4 text-center">
+          <h2 className="text-lg font-bold">Akofada BCC</h2>
+        </div>
+
+        {/* Full Hero Content for larger screens */}
+        <div className="hidden md:flex flex-1 p-4 md:p-8 flex-col justify-center items-start md:pl-8 lg:pl-16">
           <div className="max-w-xl space-y-4 md:space-y-6">
             <div className="inline-block">
               <div className="flex items-center space-x-2">
@@ -27,7 +33,7 @@ export default function Home() {
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
               Field Data Collection Platform
             </h1>
-            
+                        
             <p className="text-muted-foreground text-base md:text-lg">
               A comprehensive solution for collecting, managing, and analyzing field data for behavioral change communication campaigns.
             </p>
@@ -39,7 +45,7 @@ export default function Home() {
                     <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <div className="text-sm md:text-base">Field data collection</div>
+                <span className="text-sm md:text-base">Field data collection</span>
               </div>
               
               <div className="flex items-center gap-2">
@@ -48,13 +54,13 @@ export default function Home() {
                     <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <div className="text-sm md:text-base">Real-time analytics</div>
+                <span className="text-sm md:text-base">Real-time analytics</span>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Right side with login form */}
+        {/* Login Form Section */}
         <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
           <div className="w-full max-w-md">
             <LoginForm />
