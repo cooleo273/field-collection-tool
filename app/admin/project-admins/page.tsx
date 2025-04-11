@@ -25,6 +25,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+// Add type for the onSuccess callback
+type AddProjectAdminResult = {
+  password: string;
+  user: any; // You might want to define a proper user type
+};
+
 export default function ProjectAdminsPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -35,6 +41,7 @@ export default function ProjectAdminsPage() {
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedAdmin, setSelectedAdmin] = useState<any>(null)
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
 
   useEffect(() => {
     loadProjectAdmins()
@@ -60,11 +67,6 @@ export default function ProjectAdminsPage() {
   const handleEdit = (admin: any) => {
     setSelectedAdmin(admin)
     setShowEditDialog(true)
-  }
-
-  const handleAssignCampaigns = (admin: any) => {
-    setSelectedAdmin(admin)
-    setShowAssignDialog(true)
   }
 
   const handleDelete = (admin: any) => {
@@ -147,9 +149,6 @@ export default function ProjectAdminsPage() {
                     <TableCell>{formatDate(admin.created_at)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleAssignCampaigns(admin)}>
-                          Assign Campaigns
-                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(admin)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -168,8 +167,13 @@ export default function ProjectAdminsPage() {
 
       <AddProjectAdminDialog 
         open={showAddDialog} 
-        onOpenChange={setShowAddDialog} 
-        onSuccess={loadProjectAdmins} 
+        onOpenChange={(open) => {
+          setShowAddDialog(open)
+          if (!open) setGeneratedPassword(null)
+        }}
+        onSuccess={() => {
+          loadProjectAdmins()
+        }} 
       />
       
       {selectedAdmin && (
