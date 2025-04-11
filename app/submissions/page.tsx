@@ -11,13 +11,26 @@ import { useAuth } from "@/contexts/auth-context"
 import { Eye, Edit, Upload, Filter } from "lucide-react"
 import { format } from "date-fns"
 
+// Updated interface to match the database schema
 interface Submission {
   id: string
-  title: string
+  campaign_id: string
+  location_id: string
+  community_group_type: string
+  participant_count: number
+  key_issues: string
   status: string
+  submitted_by: string
+  submitted_at: string
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_notes: string | null
+  sync_status: string
   created_at: string
-  location: string
-  campaign: string
+  updated_at: string
+  // Join data
+  campaigns?: { name: string }
+  locations?: { name: string }
 }
 
 export default function SubmissionsPage() {
@@ -31,10 +44,15 @@ export default function SubmissionsPage() {
 
     const fetchSubmissions = async () => {
       try {
+        // Updated query to match the schema and include related data
         const { data, error } = await supabase
           .from("submissions")
-          .select("*")
-          .eq("user_id", userProfile.id)
+          .select(`
+            *,
+            campaigns(name),
+            locations(name)
+          `)
+          .eq("submitted_by", userProfile.id)
           .order("created_at", { ascending: false })
 
         if (error) throw error
@@ -49,7 +67,7 @@ export default function SubmissionsPage() {
 
     fetchSubmissions()
 
-    // Set up real-time subscription
+    // Set up real-time subscription with corrected field name
     const subscription = supabase
       .channel("submissions_changes")
       .on(
@@ -58,7 +76,7 @@ export default function SubmissionsPage() {
           event: "*",
           schema: "public",
           table: "submissions",
-          filter: `user_id=eq.${userProfile.id}`,
+          filter: `submitted_by=eq.${userProfile.id}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
@@ -84,9 +102,12 @@ export default function SubmissionsPage() {
       case "approved":
         return "status-badge-success"
       case "pending":
+      case "submitted":
         return "status-badge-warning"
       case "rejected":
         return "status-badge-error"
+      case "draft":
+        return "status-badge-info"
       default:
         return "status-badge-info"
     }
@@ -139,12 +160,13 @@ export default function SubmissionsPage() {
               <Card key={submission.id} className="mobile-card">
                 <div className="flex flex-col space-y-2">
                   <div className="flex justify-between items-start">
-                    <h3 className="font-medium">{submission.title}</h3>
+                    <h3 className="font-medium">{submission.community_group_type}</h3>
                     <span className={getStatusBadgeClass(submission.status)}>{submission.status}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    <p>Location: {submission.location}</p>
-                    <p>Campaign: {submission.campaign}</p>
+                    <p>Location: {submission.locations?.name || 'Unknown'}</p>
+                    <p>Campaign: {submission.campaigns?.name || 'Unknown'}</p>
+                    <p>Participants: {submission.participant_count}</p>
                     <p>Date: {format(new Date(submission.created_at), "PPP")}</p>
                   </div>
                   <div className="flex gap-2 pt-2">
