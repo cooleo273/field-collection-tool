@@ -420,7 +420,7 @@ function getStatusColor(status: string) {
       return "bg-green-500"
     case "rejected":
       return "bg-red-500"
-    case "pending":
+    case "submitted":
       return "bg-yellow-500"
     default:
       return "bg-blue-500"

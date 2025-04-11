@@ -70,7 +70,7 @@ export async function getProjectAdminDashboardStats(userId: string): Promise<Das
     
     // Count submissions by status
     const pendingSubmissions = allSubmissions ? 
-      allSubmissions.filter(s => s.status === 'pending').length : 0
+      allSubmissions.filter(s => s.status === 'submitted').length : 0
     
     // Get recent submissions - without trying to join with profiles
     const { data: recentSubmissions, error: recentError } = await supabase
@@ -174,7 +174,7 @@ function calculateStatusDistribution(submissions: any[]): StatusDistributionData
   }
   
   submissions.forEach(submission => {
-    if (submission.status === 'pending') {
+    if (submission.status === 'submitted') {
       statusCounts.pending++
     } else if (submission.status === 'approved') {
       statusCounts.approved++

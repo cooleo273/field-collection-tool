@@ -101,7 +101,6 @@ export default function SubmissionsPage() {
     switch (status.toLowerCase()) {
       case "approved":
         return "status-badge-success"
-      case "pending":
       case "submitted":
         return "status-badge-warning"
       case "rejected":

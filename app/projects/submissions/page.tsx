@@ -72,7 +72,7 @@ export default function ProjectAdminSubmissionsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="pending">
+      <Tabs defaultValue="submitted">
         <TabsList className="mb-4">
           <TabsTrigger value="pending">Pending Review</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
@@ -81,20 +81,20 @@ export default function ProjectAdminSubmissionsPage() {
         </TabsList>
 
         {/* Pending submissions */}
-        <TabsContent value="pending">
+        <TabsContent value="submitted">
           <Card>
             <CardHeader>
               <CardTitle>Submissions Awaiting Review</CardTitle>
             </CardHeader>
             <CardContent>
-              {submissions.filter((s) => s.status === "pending").length === 0 ? (
+              {submissions.filter((s) => s.status === "submitted").length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-muted-foreground">No pending submissions</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {submissions
-                    .filter((s) => s.status === "pending")
+                    .filter((s) => s.status === "submitted")
                     .map((submission) => (
                       <Card key={submission.id}>
                         <CardContent className="p-4">
