@@ -19,6 +19,9 @@ import { uploadImage } from "@/lib/supabase/storage"
 import { getLocations, getLocationsByCampaign } from "@/lib/supabase/locations"
 import { getCampaigns } from "@/lib/supabase/campaigns"
 import { useAuth } from "@/contexts/auth-context"
+import { ArrowLeft, Camera, Upload } from "lucide-react"
+import { supabase } from "@/lib/supabase/client"
+import { DashboardLayout } from "@/components/dashboard-layout"
 
 const COMMUNITY_GROUPS = [
     "Women Associations",
@@ -126,17 +129,41 @@ export default function NewSubmissionPage() {
 
         setIsSubmitting(true)
         try {
+            // Create the submission
             const submission = await createSubmission({
                 campaign_id: values.campaign_id,
                 location_id: values.location_id,
                 community_group_type: values.community_group_type,
                 participant_count: values.participant_count,
                 key_issues: values.key_issues,
-                status: "draft", //  <---  Status is now set to 'draft' as per schema
+                status: "draft",
                 submitted_by: userProfile.id,
                 submitted_at: new Date().toISOString(),
-                sync_status: "local", // <--- sync_status is set to 'synced' as per schema
+                sync_status: "local",
             })
+
+            // Store the photo URLs in the submission_photos table
+            if (submission && values.images.length > 0) {
+                const photoPromises = values.images.map(async (imageUrl) => {
+                    try {
+                        const { data, error } = await supabase
+                            .from('submission_photos')
+                            .insert({
+                                submission_id: submission.id,
+                                photo_url: imageUrl,
+                                created_at: new Date().toISOString()
+                            })
+                        
+                        if (error) {
+                            console.error("Error storing photo reference:", error)
+                        }
+                    } catch (err) {
+                        console.error("Error in photo storage:", err)
+                    }
+                })
+                
+                await Promise.all(photoPromises)
+            }
 
             if (submission) {
                 toast({
@@ -158,169 +185,208 @@ export default function NewSubmissionPage() {
     }
 
     if (isLoading) {
-        return <LoadingSpinner />
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <LoadingSpinner />
+            </div>
+        )
     }
 
     return (
-        <div className="container py-10">
-            <Card>
-                <CardHeader>
-                    <CardTitle>New Submission</CardTitle>
-                    <CardDescription>
-                        Create a new field data submission for your assigned location
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
+        <DashboardLayout>
+        <div className="container max-w-4xl mx-auto px-4 py-6 md:py-10">
+            <div className="mb-6">
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => router.back()}
+                    className="mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft className="mr-1 h-4 w-4" />
+                    Back
+                </Button>
+                <h1 className="text-2xl font-bold tracking-tight md:text-3xl">New Submission</h1>
+                <p className="text-muted-foreground mt-1">
+                    Record field data from your community engagement
+                </p>
+            </div>
+            
+            <Card className="border shadow-sm">
+                <CardContent className="pt-6">
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField
-                                    control={form.control}
-                                    name="campaign_id"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Campaign</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a campaign" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {campaigns.map((campaign) => (
-                                                        <SelectItem key={campaign.id} value={campaign.id}>
-                                                            {campaign.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                            <div className="space-y-4">
+                                <h2 className="text-lg font-semibold">Basic Information</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="campaign_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Campaign</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10">
+                                                            <SelectValue placeholder="Select a campaign" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {campaigns.map((campaign) => (
+                                                            <SelectItem key={campaign.id} value={campaign.id}>
+                                                                {campaign.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                <FormField
-                                    control={form.control}
-                                    name="location_id"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Location</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a location" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {locations.map((location) => (
-                                                        <SelectItem key={location.id} value={location.id}>
-                                                            {location.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                    <FormField
+                                        control={form.control}
+                                        name="location_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Location</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10">
+                                                            <SelectValue placeholder="Select a location" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {locations.map((location) => (
+                                                            <SelectItem key={location.id} value={location.id}>
+                                                                {location.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="community_group_type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Community Group Type</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10">
+                                                            <SelectValue placeholder="Select a group type" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {COMMUNITY_GROUPS.map((group) => (
+                                                            <SelectItem key={group} value={group}>
+                                                                {group}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                <FormField
-                                    control={form.control}
-                                    name="community_group_type"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Community Group Type</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormField
+                                        control={form.control}
+                                        name="participant_count"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Number of Participants</FormLabel>
                                                 <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a group type" />
-                                                    </SelectTrigger>
+                                                    <Input type="number" min="1" className="h-10" {...field} />
                                                 </FormControl>
-                                                <SelectContent>
-                                                    {COMMUNITY_GROUPS.map((group) => (
-                                                        <SelectItem key={group} value={group}>
-                                                            {group}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
 
+                            <div className="space-y-4 pt-2">
+                                <h2 className="text-lg font-semibold">Session Details</h2>
                                 <FormField
                                     control={form.control}
-                                    name="participant_count"
+                                    name="key_issues"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Number of Participants</FormLabel>
+                                            <FormLabel>Key Issues/Takeaways</FormLabel>
                                             <FormControl>
-                                                <Input type="number" min="1" {...field} />
+                                                <Textarea
+                                                    placeholder="Describe the key issues discussed and main takeaways from the session..."
+                                                    className="min-h-[120px] resize-y"
+                                                    {...field}
+                                                />
                                             </FormControl>
+                                            <FormDescription>
+                                                Provide details about the topics discussed and outcomes of the session
+                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
 
-                            <FormField
-                                control={form.control}
-                                name="key_issues"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Key Issues/Takeaways</FormLabel>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder="Describe the key issues discussed and main takeaways from the session..."
-                                                className="min-h-[120px]"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            Provide details about the topics discussed and outcomes of the session
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="images"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Photo Evidence</FormLabel>
-                                        <FormControl>
-                                            <ImageUpload
-                                                value={uploadedImageUrl}
-                                                onUpload={handleImageUpload}
-                                                onRemove={handleImageRemove}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>
-                                            Upload photos from the engagement session (at least one photo is required)
-                                        </FormDescription>
-                                        <FormMessage />
-                                        {field.value.length > 0 && (
-                                            <div className="mt-2 text-sm text-muted-foreground">
-                                                {field.value.length} photo{field.value.length > 1 ? "s" : ""} uploaded
+                            <div className="space-y-4 pt-2">
+                                <h2 className="text-lg font-semibold">Photo Evidence</h2>
+                                <FormField
+                                    control={form.control}
+                                    name="images"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="bg-muted/30 rounded-lg p-4">
+                                                <FormControl>
+                                                    <div className="max-w-sm mx-auto">
+                                                        <ImageUpload
+                                                            value={uploadedImageUrl}
+                                                            onUpload={handleImageUpload}
+                                                            onRemove={handleImageRemove}
+                                                        />
+                                                    </div>
+                                                </FormControl>
+                                                
+                                                {field.value.length > 0 ? (
+                                                    <div className="mt-4 text-sm text-center">
+                                                        <span className="font-medium text-primary">
+                                                            {field.value.length} photo{field.value.length > 1 ? "s" : ""} uploaded
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-4 text-sm text-center text-muted-foreground">
+                                                        <Camera className="h-4 w-4 inline-block mr-1" />
+                                                        At least one photo is required
+                                                    </div>
+                                                )}
+                                                <FormMessage />
                                             </div>
-                                        )}
-                                    </FormItem>
-                                )}
-                            />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                            <div className="flex justify-end space-x-2">
+                            <div className="pt-4 border-t flex flex-col sm:flex-row sm:justify-end gap-3">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => router.back()}
                                     disabled={isSubmitting}
+                                    className="w-full sm:w-auto order-2 sm:order-1"
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={isSubmitting}>
+                                <Button 
+                                    type="submit" 
+                                    disabled={isSubmitting}
+                                    className="w-full sm:w-auto order-1 sm:order-2"
+                                >
                                     {isSubmitting ? (
                                         <>
                                             <LoadingSpinner className="mr-2 h-4 w-4" />
@@ -336,6 +402,7 @@ export default function NewSubmissionPage() {
                 </CardContent>
             </Card>
         </div>
+        </DashboardLayout>
     )
 }
 
