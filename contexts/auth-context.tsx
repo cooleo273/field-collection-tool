@@ -30,6 +30,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Make sure your auth initialization sets isLoading to false when complete
+  useEffect(() => {
+    const initAuth = async () => {
+      setIsLoading(true)
+      try {
+        // Your auth initialization code
+        // ...
+      } catch (error) {
+        console.error("Auth initialization error:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    initAuth()
+  }, [])
   const router = useRouter()
 
   // Function to fetch user profile
@@ -40,32 +57,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // First, check if the user exists in the users table
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("*")
+        .select("id, name, email, role, phone, status")
         .eq("id", userId)
         .single()
 
       if (userError) {
-        console.error("Error fetching user from users table:", userError)
-        // If user doesn't exist, create a new user profile
-        const { data: authUser } = await supabase.auth.getUser()
-        if (authUser?.user) {
-          console.log("Creating new user profile for:", authUser.user.email)
+        console.error("Error fetching user from users table:", userError.message, userError.details)
+        
+        // Get current user from auth
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError) {
+          console.error("Error getting auth user:", authError)
+          return null
+        }
+
+        if (authUser) {
+          console.log("Creating new user profile for:", authUser.email)
           const { data: newUser, error: createError } = await supabase
             .from("users")
             .insert([
               {
                 id: userId,
-                email: authUser.user.email,
-                name: authUser.user.user_metadata?.name || authUser.user.email,
-                role: "admin", // Default role
+                email: authUser.email,
+                name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+                role: "promoter", // Changed default role to promoter
                 status: "active"
               }
             ])
-            .select()
+            .select("id, name, email, role, phone, status")
             .single()
 
           if (createError) {
-            console.error("Error creating user profile:", createError)
+            console.error("Error creating user profile:", createError.message, createError.details)
             return null
           }
 
@@ -83,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("User profile fetched successfully:", userData)
       return userData as UserProfile
     } catch (error) {
-      console.error("Error in fetchUserProfile:", error)
+      console.error("Error in fetchUserProfile:", error instanceof Error ? error.message : error)
       return null
     }
   }
