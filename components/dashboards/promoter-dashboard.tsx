@@ -14,9 +14,11 @@ import {
 } from "lucide-react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
-import { getSubmissionsByUserId } from "@/lib/supabase/submissions"
-import { subscribeToSubmissions, unsubscribe } from "@/lib/supabase/real-time"
-import type { RealtimeChannel } from "@supabase/supabase-js"
+// Update imports
+import { getPromoterDashboardStats } from "@/lib/supabase/submissions"
+// Remove these imports as they're no longer needed
+// import { subscribeToSubmissions, unsubscribe } from "@/lib/supabase/real-time"
+// import type { RealtimeChannel } from "@supabase/supabase-js"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 
@@ -25,7 +27,7 @@ export function PromoterDashboard() {
   const { userProfile } = useAuth()
   const [stats, setStats] = useState({
     totalSubmissions: 0,
-    pendingSubmissions: 0,
+    submittedSubmissions: 0, // Changed from pendingSubmissions
     approvedSubmissions: 0,
     rejectedSubmissions: 0,
   })
@@ -33,57 +35,19 @@ export function PromoterDashboard() {
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([])
 
   useEffect(() => {
-    if (!userProfile) return
-
-    let realtimeChannel: RealtimeChannel | null = null
+    if (!userProfile?.id) return
+    
+    // Store the ID in a local variable to assure TypeScript it's not null
+    const userId = userProfile.id
 
     async function loadStats() {
       try {
         setLoading(true)
-        // Get submissions by this promoter
-        const submissions = await getSubmissionsByUserId(userProfile?.id || "")
+        const { stats: dashboardStats, recentSubmissions: recent } = 
+          await getPromoterDashboardStats(userId)
         
-        // Calculate stats
-        const totalSubmissions = submissions.length
-        const pendingSubmissions = submissions.filter(s => s.status === "pending").length
-        const approvedSubmissions = submissions.filter(s => s.status === "approved").length
-        const rejectedSubmissions = submissions.filter(s => s.status === "rejected").length
-        
-        setStats({
-          totalSubmissions,
-          pendingSubmissions,
-          approvedSubmissions,
-          rejectedSubmissions,
-        })
-        
-        // Get 5 most recent submissions
-        const recent = submissions
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5)
+        setStats(dashboardStats)
         setRecentSubmissions(recent)
-
-        // Subscribe to real-time updates for submissions
-        realtimeChannel = subscribeToSubmissions(async () => {
-          // Reload submissions when there's a change
-          const updatedSubmissions = await getSubmissionsByUserId(userProfile?.id || "")
-          
-          const updatedTotalSubmissions = updatedSubmissions.length
-          const updatedPendingSubmissions = updatedSubmissions.filter(s => s.status === "pending").length
-          const updatedApprovedSubmissions = updatedSubmissions.filter(s => s.status === "approved").length
-          const updatedRejectedSubmissions = updatedSubmissions.filter(s => s.status === "rejected").length
-          
-          setStats({
-            totalSubmissions: updatedTotalSubmissions,
-            pendingSubmissions: updatedPendingSubmissions,
-            approvedSubmissions: updatedApprovedSubmissions,
-            rejectedSubmissions: updatedRejectedSubmissions,
-          })
-          
-          const updatedRecent = updatedSubmissions
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 5)
-          setRecentSubmissions(updatedRecent)
-        })
       } catch (error) {
         console.error("Error loading dashboard stats:", error)
       } finally {
@@ -92,13 +56,6 @@ export function PromoterDashboard() {
     }
 
     loadStats()
-
-    return () => {
-      // Clean up subscription when component unmounts
-      if (realtimeChannel) {
-        unsubscribe(realtimeChannel)
-      }
-    }
   }, [userProfile])
 
   if (loading) {
@@ -130,13 +87,13 @@ export function PromoterDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+            <CardTitle className="text-sm font-medium">Submitted</CardTitle>
             <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingSubmissions.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.submittedSubmissions.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Awaiting approval
+              Awaiting review
             </p>
           </CardContent>
         </Card>
