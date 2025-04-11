@@ -8,12 +8,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserNav } from "@/components/user-nav"
-import { Sidebar } from "@/components/sidebar"
+import { Sidebar } from "./sidebar"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Database, Menu } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function   DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { isLoading, userProfile } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
