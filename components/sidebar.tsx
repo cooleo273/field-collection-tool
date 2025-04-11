@@ -63,7 +63,6 @@ export function Sidebar() {
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "New Submission", href: "/submissions/new", icon: Upload },
       { name: "My Submissions", href: "/submissions", icon: ClipboardList },
-      { name: "Data Entry", href: "/submissions/data-entry", icon: FileInput },
       { name: "Reports", href: "/submissions/reports", icon: PieChart },
     ],
   }
@@ -92,10 +91,6 @@ export function Sidebar() {
             <li key={item.name}>
               <Link
                 href={item.href}
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavigation(item.href)
-                }}
                 className={cn(
                   "sidebar-link",
                   pathname === item.href || pathname.startsWith(item.href + "/")
