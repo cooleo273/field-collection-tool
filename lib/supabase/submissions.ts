@@ -1,3 +1,4 @@
+// Fix the import to use the correct function or use the existing supabase client
 import { supabase } from "./client"
 import type { Database } from "@/types/supabase"
 
@@ -62,34 +63,44 @@ export async function getSubmissionById(id: string) {
   try {
     const { data, error } = await supabase
       .from("submissions")
-      .select("*, users(name, email, role), locations(name, address), campaigns(name, description)")
+      .select(`
+        *,
+        campaigns(name),
+        locations(name)
+      `)
       .eq("id", id)
       .single()
 
     if (error) {
       console.error("Error fetching submission by ID:", error)
-      return null
+      throw error // Throw the actual error instead of returning null
+    }
+
+    if (!data) {
+      throw new Error("Submission not found")
     }
 
     return data
   } catch (error) {
     console.error("Error in getSubmissionById:", error)
-    return null
+    throw error // Propagate the error instead of returning null
   }
 }
 
-/**
- * Create a new submission
- */
+
+
+
+// Update createSubmission function
 export async function createSubmission(
-  submission: Omit<Database['public']['Tables']['submissions']['Insert'], 'id' | 'created_at' | 'updated_at'>
+  submission: Omit<Database['public']['Tables']['submissions']['Insert'], 'id' | 'created_at' | 'updated_at'>,
+  photoUrls?: string[]
 ) {
   const { data, error } = await supabase
     .from('submissions')
     .insert([{
       ...submission,
-      status: 'pending',
-      sync_status: 'pending',
+      status: 'submitted' as SubmissionStatus, // Changed from 'pending' to 'submitted'
+      sync_status: 'synced' as SyncStatusType, // Changed from 'pending' to 'synced'
       submitted_at: new Date().toISOString()
     }])
     .select()
@@ -98,6 +109,25 @@ export async function createSubmission(
   if (error) {
     console.error('Error creating submission:', error)
     throw error
+  }
+
+  // If photos were provided, store them in the submission_photos table
+  if (photoUrls && photoUrls.length > 0 && data) {
+    const photoEntries = photoUrls.map(url => ({
+      submission_id: data.id,
+      photo_url: url,
+      created_at: new Date().toISOString()
+    }))
+
+    const { error: photoError } = await supabase
+      .from('submission_photos')
+      .insert(photoEntries)
+
+    if (photoError) {
+      console.error('Error storing submission photos:', photoError)
+      // We don't throw here to avoid rolling back the submission creation
+      // Instead, we log the error and continue
+    }
   }
 
   return data
@@ -154,7 +184,7 @@ export async function deleteSubmission(id: string) {
 /**
  * Get submissions by status
  */
-export async function getSubmissionsByStatus(status: string) {
+export async function getSubmissionsByStatus(status: SubmissionStatus) {
   try {
     const { data, error } = await supabase
       .from("submissions")
@@ -286,14 +316,107 @@ export async function getSubmissionsByDateRange(startDate: string, endDate: stri
   }
 }
 
-export async function updateSubmissionStatus(
-  submissionId: string,
-  status: "approved" | "rejected"
-) {
-  const { data, error } = await supabase
-    .from("submissions")
-    .update({ status })
-    .eq("id", submissionId)
-  if (error) throw error
-  return data
+// Define the new TypeScript types for the enums
+type SubmissionStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+type SyncStatusType = 'local' | 'synced';
+
+export async function updateSubmissionStatus(submissionId: string, status: SubmissionStatus) {
+  try {
+    // Get the current user ID for the reviewer field
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    const { error } = await supabase
+      .from('submissions')
+      .update({
+        status: status,
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+        sync_status: 'synced' as SyncStatusType
+      })
+      .eq('id', submissionId)
+    
+    if (error) {
+      console.error('Error updating submission status:', error)
+      throw error
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating submission status:', error)
+    throw error
+  }
+}
+
+/**
+ * Get submission photos by submission ID
+ */
+export async function getSubmissionPhotos(submissionId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("submission_photos")
+      .select("*")
+      .eq("submission_id", submissionId)
+      .order("created_at", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching submission photos:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error in getSubmissionPhotos:", error)
+    return []
+  }
+}
+
+
+// Add this new function to get dashboard stats
+export async function getPromoterDashboardStats(userId: string) {
+  
+  
+  try {
+    // Get total count
+    const { count: totalCount } = await supabase
+      .from('submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('submitted_by', userId)
+
+    // Get counts by status
+    const { data: statusCounts } = await supabase
+      .from('submissions')
+      .select('status')
+      .eq('submitted_by', userId)
+
+    // Get recent submissions with campaign and location info
+    const { data: recentSubmissions } = await supabase
+      .from('submissions')
+      .select(`
+        *,
+        campaigns(name),
+        locations(name)
+      `)
+      .eq('submitted_by', userId)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    // Calculate counts by status
+    const pendingCount = statusCounts?.filter(s => s.status === 'pending').length || 0
+    const submittedCount = statusCounts?.filter(s => s.status === 'submitted').length || 0
+    const approvedCount = statusCounts?.filter(s => s.status === 'approved').length || 0
+    const rejectedCount = statusCounts?.filter(s => s.status === 'rejected').length || 0
+
+    return {
+      stats: {
+        totalSubmissions: totalCount || 0,
+        submittedSubmissions: submittedCount, // Changed from pendingSubmissions
+        approvedSubmissions: approvedCount,
+        rejectedSubmissions: rejectedCount,
+      },
+      recentSubmissions: recentSubmissions || []
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error)
+    throw error
+  }
 }
