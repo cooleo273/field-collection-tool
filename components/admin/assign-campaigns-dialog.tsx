@@ -32,9 +32,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { getCampaigns } from "@/lib/services/campaigns"
+import { getCampaigns } from "@/lib/services/campaigns.service"
 import { assignCampaignsToAdmin, getAdminCampaigns } from "@/lib/services/campaign-admins"
-import { Campaign } from "@/lib/services/campaigns"
+import { Campaign } from "@/lib/services/campaigns.service"
 import { CheckedState } from "@radix-ui/react-checkbox"
 
 const formSchema = z.object({

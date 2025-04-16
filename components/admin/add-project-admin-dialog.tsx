@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createUserWithAuth } from "@/lib/services/users"
+import { createUserWithAuth } from "@/lib/services/users.service"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Copy } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"

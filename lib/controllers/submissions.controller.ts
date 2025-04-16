@@ -27,10 +27,9 @@ export default class SubmissionController {
     });
   }
 
-  async getSubmissionPhotosById(req: NextRequest, id: string) {
+  async getSubmissionPhotosById(req: NextRequest, params: { id: string }) {
     return this.handleRequest(req, async () => {
-      const { searchParams } = new URL(req.url);
-      const id = searchParams.get("id");
+      const { id } = params;
 
       if (!id) {
         throw new Error("Submission ID is required");
@@ -40,10 +39,9 @@ export default class SubmissionController {
     });
   }
 
-  async getSubmissionPhotosStorage(req: NextRequest, id: string) {
+  async getSubmissionPhotosStorage(req: NextRequest, params: { id: string }) {
     return this.handleRequest(req, async () => {
-      const { searchParams } = new URL(req.url);
-      const id = searchParams.get("id");
+      const { id } = params;
 
       if (!id) {
         throw new Error("Submission ID is required");

@@ -7,12 +7,7 @@ import type { Database } from "@/types/supabase"
 export function getServerSupabaseClient() {
   const cookieStore = cookies()
   return createServerComponentClient<Database>({
-    cookies: () => cookieStore,
-    options: {
-      auth: {
-        persistSession: false,
-      },
-    },
+    cookies: () => cookieStore
   })
 }
 

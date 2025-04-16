@@ -10,13 +10,14 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
-import { getSupabaseClient } from "@/lib/services/client"
 import { useAuth } from "@/contexts/auth-context"
 import { DashboardLayout } from "@/components/dashboard-layout"
 
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getSubmissionPhotosById } from "@/lib/repositories/submissions"
+import { getSubmissionPhotosById, getSubmissionPhotosStorage, getSubmissionsBySubmissionId } from "@/lib/repositories/submissions"
+import { getPublicUrl } from "@/lib/repositories/storage.repository"
+import { supabase } from "@/lib/services/client"
 
 // Match the database schema
 interface Submission {
@@ -47,7 +48,6 @@ export default function SubmissionDetailsPage() {
   const [submission, setSubmission] = useState<Submission | null>(null)
   const [loading, setLoading] = useState(true)
   const { userProfile } = useAuth()
-  const supabase = getSupabaseClient()
 
   const [participantName, setParticipantName] = useState("")
   const [participantAge, setParticipantAge] = useState("")
@@ -69,28 +69,14 @@ export default function SubmissionDetailsPage() {
 
   const loadSubmission = async (id: string) => {
     try {
-      const { data, error } = await supabase
-        .from("submissions")
-        .select(`
-          *,
-          users:submitted_by(name, email)
-        `)
-        .eq("id", id)
-        .single()
-
-      if (error) {
-        console.error("Error fetching submission:", error)
-        router.push("/submissions")
-        return
-      }
-
-      setSubmission(data)
+      const response = await getSubmissionsBySubmissionId(id)
+      setSubmission(response);
     } catch (error) {
-      console.error("Error loading submission:", error)
+      console.error("Error loading submission:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -128,33 +114,28 @@ export default function SubmissionDetailsPage() {
       const fetchPhotos = async () => {
         try {
           // Get photos from the submission_photos table
-          const photoData = await getSubmissionPhotosById(submission.id)
-          
+          const photoData = await getSubmissionPhotosById(submission.id);
+
           if (photoData && photoData.length > 0) {
             // Extract the photo URLs
-            setPhotos(photoData.map(item => item.photo_url))
+            setPhotos(photoData.map((item: { photo_url: string }) => item.photo_url));
           } else {
             // Fallback: Try to list files from the storage bucket directly
-            const { data: storageData, error: storageError } = await supabase.storage
-              .from("submission-photos")
-              .list(`${submission.id}`)
-              
+            const { data: storageData, error: storageError } = await getSubmissionPhotosStorage(submission.id);
+
             if (!storageError && storageData && storageData.length > 0) {
               const photoUrls = storageData
-                .filter(item => !item.id.endsWith('/')) // Filter out folders
-                .map(item => {
-                  const { data: { publicUrl } } = supabase.storage
-                    .from("submission-photos")
-                    .getPublicUrl(`${submission.id}/${item.name}`)
-                  return publicUrl
-                })
-              setPhotos(photoUrls)
+                .filter((item: { id: string }) => !item.id.endsWith('/')) // Filter out folders
+                .map((item: { name: string }) => {
+                  return getPublicUrl(`${submission.id}/${item.name}`);
+                });
+              setPhotos(await Promise.all(photoUrls)); // Await the resolved URLs
             }
           }
         } catch (err) {
-          console.error("Error processing photos:", err)
+          console.error("Error processing photos:", err);
         }
-      }
+      };
       
       fetchPhotos()
     }

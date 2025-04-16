@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateCommunityGroup } from "@/lib/services/community-groups"
-import { getLocations } from "@/lib/services/locations"
+import { getLocations } from "@/lib/services/locations.service"
 import { useToast } from "@/components/ui/use-toast"
-import { Location } from "@/lib/services/locations"
+import { Location } from "@/lib/services/locations.service"
 import { CommunityGroup } from "@/lib/services/community-groups"
 
 interface EditCommunityGroupDialogProps {

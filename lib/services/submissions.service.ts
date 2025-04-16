@@ -81,7 +81,16 @@ export default class SubmissionService {
       throw error;
     }
   }
-
+  async getSubmissionsBySubmissionId(id: string) {
+    const { data, error } = await supabase
+        .from("submissions")
+        .select(`
+          *,
+          users:submitted_by(name, email)
+        `)
+        .eq("id", id)
+        .single()
+  }
   async createSubmission(
     submission: Omit<
       Database["public"]["Tables"]["submissions"]["Insert"],

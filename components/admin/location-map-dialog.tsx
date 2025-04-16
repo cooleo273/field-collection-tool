@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
-import { Location } from "@/lib/services/locations"
+import { Location } from "@/lib/services/locations.service"
 
 // Fix for default marker icons in Leaflet with Next.js
 const icon = L.icon({

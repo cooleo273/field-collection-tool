@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, Calendar } from "lucide-react"
-import { getCampaigns, createCampaign, deleteCampaign, Campaign, getCampaignById } from "@/lib/services/campaigns"
+import { getCampaigns, createCampaign, deleteCampaign, Campaign, getCampaignById } from "@/lib/services/campaigns.service"
 import { getAdminCampaigns } from "@/lib/services/campaign-admins"
 import { formatDate } from "@/lib/utils"
 import { AddCampaignDialog } from "@/components/admin/add-campaign-dialog"
