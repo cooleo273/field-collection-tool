@@ -14,8 +14,8 @@ import {
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
-import { getProjects } from "@/lib/supabase/projects"
-import { assignProjectsToAdmin, getAdminProjects } from "@/lib/supabase/users"
+import { getProjects } from "@/lib/services/projects"
+import { assignProjectsToAdmin, getAdminProjects } from "@/lib/services/users"
 
 interface AssignProjectsDialogProps {
   admin: any

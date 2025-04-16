@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './auth-context'
-import { getProjectByAdmin, getProjectById } from '@/lib/supabase/projects'
+import { getProjectByAdmin, getProjectById } from '@/lib/services/projects'
 
 interface Project {
   id: string
@@ -42,13 +42,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined' || !userProfile) return;
     
     const currentStoredId = localStorage.getItem('selectedProjectId');
-    console.log("Refreshing project from storage, ID:", currentStoredId);
+     ("Refreshing project from storage, ID:", currentStoredId);
     
     if (currentStoredId) {
       try {
         const projectData = await getProjectById(currentStoredId);
         if (projectData) {
-          console.log("Setting project from storage refresh:", projectData);
+           ("Setting project from storage refresh:", projectData);
           setCurrentProject(projectData);
         }
       } catch (error) {
@@ -68,18 +68,18 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           ? localStorage.getItem('selectedProjectId') 
           : null;
         
-        console.log("ProjectContext - Initializing with stored ID:", storedProjectId);
+         ("ProjectContext - Initializing with stored ID:", storedProjectId);
         
         if (storedProjectId) {
           // Try to fetch the specific project by ID
           const projectData = await getProjectById(storedProjectId);
           
           if (projectData) {
-            console.log("ProjectContext - Setting project from localStorage:", projectData);
+             ("ProjectContext - Setting project from localStorage:", projectData);
             setCurrentProject(projectData);
             return;
           } else {
-            console.log("ProjectContext - Stored project ID not found, falling back to admin projects");
+             ("ProjectContext - Stored project ID not found, falling back to admin projects");
           }
         }
         
@@ -87,7 +87,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         const adminProjects = await getProjectByAdmin(userProfile.id);
         
         if (adminProjects && Array.isArray(adminProjects) && adminProjects.length > 0) {
-          console.log("ProjectContext - Setting first admin project:", adminProjects[0]);
+           ("ProjectContext - Setting first admin project:", adminProjects[0]);
           setCurrentProject(adminProjects[0]);
           
           // Update localStorage with this project
@@ -109,7 +109,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'selectedProjectId' && e.newValue) {
-        console.log("Storage event detected, new project ID:", e.newValue);
+         ("Storage event detected, new project ID:", e.newValue);
         refreshProjectFromStorage();
       }
     };

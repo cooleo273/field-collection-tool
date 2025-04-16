@@ -28,7 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
-import { updateCampaign, Campaign } from "@/lib/supabase/campaigns"
+import { updateCampaign, Campaign } from "@/lib/services/campaigns"
 import { useToast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
@@ -82,7 +82,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange, onSuccess }: 
         status: data.status,
       }
 
-      console.log("Updating campaign with data:", campaignData)
+       ("Updating campaign with data:", campaignData)
       
       await updateCampaign(campaign.id, campaignData)
       

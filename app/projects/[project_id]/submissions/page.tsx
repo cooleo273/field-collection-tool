@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { RefreshCw, CheckCircle, XCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-import { getSubmissions, updateSubmissionStatus } from "@/lib/supabase/submissions"
+import { getSubmissions, updateSubmissionStatus } from "@/lib/services/submissions"
 
 export default function ProjectAdminSubmissionsPage() {
   const router = useRouter()

@@ -29,18 +29,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import {
-  getSubmissionById,
   updateSubmission,
-} from "@/lib/supabase/submissions";
-import { uploadImage } from "@/lib/supabase/storage";
-import { getLocations } from "@/lib/supabase/locations";
-import { getCampaigns } from "@/lib/supabase/campaigns";
+} from "@/lib/services/submissions";
+import { uploadImage } from "@/lib/services/storage.service";
+import { getLocations } from "@/lib/services/locations";
+import { getCampaigns } from "@/lib/services/campaigns";
 import { useAuth } from "@/contexts/auth-context";
 import { ArrowLeft, Camera } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/services/client";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import Image from "next/image";
 import { X } from "lucide-react"; // Add this import
+import { getSubmissionById } from "@/lib/repositories/submissions";
 
 const COMMUNITY_GROUPS = [
   "Women Associations",
@@ -121,6 +121,7 @@ export default function EditSubmissionPage() {
       setIsLoading(true);
       try {
         // Load submission data
+        // const submissionData = await getSubmissionById(submissionId);
         const submissionData = await getSubmissionById(submissionId);
 
         // Check if the submission belongs to the current user
@@ -135,13 +136,6 @@ export default function EditSubmissionPage() {
         }
 
         setSubmission(submissionData);
-
-        // // Load form data
-        // const campaignsData = await getCampaigns()
-        // const locationsData = await getLocations()
-        // setCampaigns(campaignsData)
-        // setLocations(locationsData)
-
         // Load existing photos
         const { data: photoData, error: photoError } = await supabase
           .from("submission_photos")

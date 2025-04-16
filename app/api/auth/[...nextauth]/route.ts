@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { getUserByEmail } from "@/lib/supabase/users"
-import { supabase } from "@/lib/supabase/client"
+import { getUserByEmail } from "@/lib/services/users"
+import { supabase } from "@/lib/services/client"
 
 export const authOptions = {
   providers: [
@@ -12,7 +12,7 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password) { 
           return null
         }
 

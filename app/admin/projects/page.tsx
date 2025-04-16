@@ -33,7 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { createProjects, getProjects, updateProject, deleteProject } from "@/lib/supabase/projects"
+import { createProjects, getProjects, updateProject, deleteProject } from "@/lib/services/projects"
 
 // Define the project schema for form validation
 const projectSchema = z.object({

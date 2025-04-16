@@ -4,7 +4,7 @@ import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/services/client"
 import type { User } from "@supabase/supabase-js"
 
 type UserProfile = {
@@ -32,27 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   
   // Make sure your auth initialization sets isLoading to false when complete
-  useEffect(() => {
-    const initAuth = async () => {
-      setIsLoading(true)
-      try {
-        // Your auth initialization code
-        // ...
-      } catch (error) {
-        console.error("Auth initialization error:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    initAuth()
-  }, [])
+  
   const router = useRouter()
 
   // Function to fetch user profile
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log("Fetching user profile for ID:", userId)
       
       // First, check if the user exists in the users table
       const { data: userData, error: userError } = await supabase
@@ -73,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (authUser) {
-          console.log("Creating new user profile for:", authUser.email)
+           
           const { data: newUser, error: createError } = await supabase
             .from("users")
             .insert([
@@ -93,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return null
           }
 
-          console.log("New user profile created:", newUser)
+           
           return newUser as UserProfile
         }
         return null
@@ -103,8 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("No user data found in database")
         return null
       }
-
-      console.log("User profile fetched successfully:", userData)
       return userData as UserProfile
     } catch (error) {
       console.error("Error in fetchUserProfile:", error instanceof Error ? error.message : error)
@@ -115,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to initialize auth state
   const initAuth = async () => {
     try {
-      console.log("Initializing auth state...")
+       ("Initializing auth state...")
       setIsLoading(true)
 
       // Get current session
@@ -128,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (session?.user) {
-        console.log("Session found, user:", session.user)
         setUser(session.user)
 
         // Fetch user profile
@@ -139,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Failed to fetch user profile")
         }
       } else {
-        console.log("No session found")
+         ("No session found")
         setUser(null)
         setUserProfile(null)
       }
@@ -158,7 +140,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user)
       
       if (event === "SIGNED_IN") {
         if (session?.user) {
@@ -182,10 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Starting sign in process...")
       setIsLoading(true)
-
-      console.log("Attempting Supabase auth sign in...")
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -201,8 +179,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: { message: "No user returned from sign in" } }
       }
 
-      console.log("Auth successful, fetching user profile...")
-
       // Fetch user profile
       const profile = await fetchUserProfile(data.user.id)
       if (!profile) {
@@ -210,9 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUserProfile(profile)
-
-      // Redirect based on role
-      console.log("Redirecting based on role:", profile.role)
       if (profile.role === "admin") {
         router.push("/admin")
       } else if (profile.role === "project-admin") {

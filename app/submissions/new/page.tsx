@@ -14,13 +14,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { ImageUpload } from "@/components/image-upload"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { createSubmission } from "@/lib/supabase/submissions"
-import { uploadImage } from "@/lib/supabase/storage"
-import { getLocations, getLocationsByCampaign } from "@/lib/supabase/locations"
-import { getAssignedCampaigns, getCampaigns } from "@/lib/supabase/campaigns"
+import { createSubmission } from "@/lib/services/submissions"
+import { uploadImage } from "@/lib/services/storage.service"
+import { getLocations, getLocationsByCampaign } from "@/lib/services/locations"
+import { getAssignedCampaigns, getCampaigns } from "@/lib/services/campaigns"
 import { useAuth } from "@/contexts/auth-context"
 import { ArrowLeft, Camera, ClipboardList, Upload } from "lucide-react"
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/services/client"
 import { DashboardLayout } from "@/components/dashboard-layout"
 
 const COMMUNITY_GROUPS = [
@@ -78,40 +78,29 @@ export default function NewSubmissionPage() {
         },
     })
 
-    // useEffect(() => {
-    // //     const loadData = async () => {
-    // //         if (!userProfile) return
+    // Removed the logic for loading assigned campaigns
+    useEffect(() => {
+        const loadData = async () => {
+            if (!userProfile) return
 
-    // //         setIsLoading(true)
-    // //         try {
-    // //             // Get only assigned campaigns instead of all campaigns
-    // //             const campaignsData = await getAssignedCampaigns(userProfile.id)
-                
-    // //             if (campaignsData.length === 0) {
-    // //                 toast({
-    // //                     title: "No Assigned Campaigns",
-    // //                     description: "You need to be assigned to a campaign before creating submissions.",
-    // //                     variant: "destructive",
-    // //                 })
-    // //                 // router.push("/dashboard")
-    // //                 return
-    // //             }
-                
-    // //             setCampaigns(campaignsData)
-    // //         } catch (error) {
-    // //             console.error("Error loading data:", error)
-    // //             toast({
-    // //                 title: "Error",
-    // //                 description: "Failed to load assigned campaigns. Please try again.",
-    // //                 variant: "destructive",
-    // //             })
-    // //         } finally {
-    // //             setIsLoading(false)
-    // //         }
-    // //     }
+            setIsLoading(true)
+            try {
+                // Removed the logic for fetching assigned campaigns
+                setCampaigns([]) // Set campaigns to an empty array
+            } catch (error) {
+                console.error("Error loading data:", error)
+                toast({
+                    title: "Error",
+                    description: "Failed to load campaigns. Please try again.",
+                    variant: "destructive",
+                })
+            } finally {
+                setIsLoading(false)
+            }
+        }
 
-    // //     loadData()
-    // // }, [userProfile, toast, router])
+        loadData()
+    }, [userProfile, toast, router])
 
     const handleImageUpload = (url: string) => {
         const currentImages = form.getValues("images")

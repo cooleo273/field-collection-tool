@@ -29,9 +29,6 @@ export function Sidebar() {
   const { userProfile, isLoading } = useAuth()
   const { currentProject, isLoading: projectLoading } = useProject()
 
-  console.log("Sidebar - Current Project:", currentProject)
-  console.log("Sidebar - Current Path:", pathname)
-
   // Wait for both auth and project to load
   if (isLoading || projectLoading) {
     return (

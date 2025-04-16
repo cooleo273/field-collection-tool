@@ -30,7 +30,7 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname()
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
-  console.log("AdminDashboardLayout - Current state:", {
+   ("AdminDashboardLayout - Current state:", {
     isLoading,
     userProfile,
     user,
@@ -51,7 +51,7 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
 
   // Show loading spinner only during initial auth check
   if (isCheckingAuth) {
-    console.log("AdminDashboardLayout - Initial auth check")
+     ("AdminDashboardLayout - Initial auth check")
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner />
@@ -61,7 +61,7 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
 
   // If not authenticated, redirect to login
   if (!user) {
-    console.log("AdminDashboardLayout - No authenticated user")
+     ("AdminDashboardLayout - No authenticated user")
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 text-center">
         <h1 className="text-2xl font-bold">Authentication Required</h1>
@@ -75,7 +75,7 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
 
   // If authenticated but no profile yet, show loading
   if (!userProfile) {
-    console.log("AdminDashboardLayout - No user profile, but authenticated")
+     ("AdminDashboardLayout - No user profile, but authenticated")
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 text-center">
         <LoadingSpinner />
@@ -86,7 +86,7 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
 
   // If not an admin, show access denied
   if (userProfile.role !== "admin") {
-    console.log("AdminDashboardLayout - Invalid role:", userProfile.role)
+     ("AdminDashboardLayout - Invalid role:", userProfile.role)
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 text-center">
         <h1 className="text-2xl font-bold">Access Denied</h1>

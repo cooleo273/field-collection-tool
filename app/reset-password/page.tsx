@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/services/client"
 
 const formSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),

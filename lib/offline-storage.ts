@@ -1,6 +1,6 @@
 // Offline storage using IndexedDB
 import { openDB } from "idb"
-import { getSupabaseClient } from "./supabase/client"
+import { getSupabaseClient } from "./services/client"
 
 // Define database name and version
 const DB_NAME = "akofada-bcc-db"

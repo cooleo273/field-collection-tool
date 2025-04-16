@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
-import { getProjectAdminDashboardStats } from "@/lib/supabase/admin-stats"
+import { getProjectAdminDashboardStats } from "@/lib/services/admin-stats"
 import { useAuth } from "@/contexts/auth-context"
 
 // First, let's define interfaces for our data types
@@ -54,7 +54,7 @@ interface DashboardData {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Add this import
-import { getAssignedProjects } from "@/lib/supabase/projects"
+import { getAssignedProjects } from "@/lib/services/projects"
 
 export function ProjectAdminDashboard() {
   const { userProfile } = useAuth()
@@ -81,7 +81,6 @@ export function ProjectAdminDashboard() {
       try {
         setLoading(true)
         const projects = await getAssignedProjects(userId)
-        console.log('Loaded projects:', projects)
         
         if (projects.length > 0) {
           setAssignedProjects(projects)

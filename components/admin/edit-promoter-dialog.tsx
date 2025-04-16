@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { updateUser, resetUserPassword } from "@/lib/supabase/users"
+import { updateUser, resetUserPassword } from "@/lib/services/users"
 import { KeyRound } from "lucide-react"
 
 const formSchema = z.object({

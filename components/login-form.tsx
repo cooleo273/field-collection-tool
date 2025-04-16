@@ -32,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/services/client"
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -63,7 +63,7 @@ export function LoginForm() {
     setLoginError(null)
 
     try {
-      console.log("Attempting to sign in...")
+       ("Attempting to sign in...")
       const { error } = await signIn(values.email, values.password)
       
       if (error) {

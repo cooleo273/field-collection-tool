@@ -114,7 +114,7 @@ export async function createUserWithAuth(userData: {
 
     // If this is a promoter and we have project ID, create the association
     if (userData.role === 'promoter' && userData.projectId && data.user?.id) {
-      console.log('Attempting to create project promoter with:', {
+       ('Attempting to create project promoter with:', {
         user_id: data.user.id,
         project_id: userData.projectId
       });
@@ -135,7 +135,7 @@ export async function createUserWithAuth(userData: {
         throw new Error(`Failed to create project promoter association: ${projectError.message}`);
       }
 
-      console.log('Successfully created project promoter:', promoterData);
+       ('Successfully created project promoter:', promoterData);
     }
 
     return {

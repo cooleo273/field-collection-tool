@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { updateCommunityGroup } from "@/lib/supabase/community-groups"
-import { getLocations } from "@/lib/supabase/locations"
+import { updateCommunityGroup } from "@/lib/services/community-groups"
+import { getLocations } from "@/lib/services/locations"
 import { useToast } from "@/components/ui/use-toast"
-import { Location } from "@/lib/supabase/locations"
-import { CommunityGroup } from "@/lib/supabase/community-groups"
+import { Location } from "@/lib/services/locations"
+import { CommunityGroup } from "@/lib/services/community-groups"
 
 interface EditCommunityGroupDialogProps {
   group: CommunityGroup

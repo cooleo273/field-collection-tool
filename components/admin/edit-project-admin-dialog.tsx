@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { updateUser } from "@/lib/supabase/users"
+import { updateUser } from "@/lib/services/users"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),

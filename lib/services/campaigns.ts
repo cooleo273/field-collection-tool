@@ -162,7 +162,6 @@ export async function getAssignedCampaigns(userId: string) {
       return []
     }
 
-    console.log("Fetched campaigns:", campaigns) // Debug log
     return campaigns || []
   } catch (error) {
     console.error("Error loading assigned campaigns:", error)

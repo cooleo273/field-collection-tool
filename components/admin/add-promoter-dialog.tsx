@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createUserWithAuth } from "@/lib/supabase/users"
+import { createUserWithAuth } from "@/lib/services/users"
 import { 
   Alert,
   AlertDescription,

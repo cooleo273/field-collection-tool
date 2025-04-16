@@ -185,7 +185,7 @@ export async function getAssignedProjects(userId: string): Promise<AssignedProje
       name: admin.projects.name || 'Unnamed Project'
     })) || []
 
-    console.log('Fetched projects:', projects)
+     ('Fetched projects:', projects)
     return projects
   } catch (error) {
     console.error("Error loading assigned projects:", error)

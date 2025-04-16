@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/services/client"
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

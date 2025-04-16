@@ -22,14 +22,14 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createUserWithAuth } from "@/lib/supabase/users"
+import { createUserWithAuth } from "@/lib/services/users"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Copy } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
 import { useEffect } from "react"
-import { supabase } from "@/lib/supabase/client"
+import { supabase } from "@/lib/services/client"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

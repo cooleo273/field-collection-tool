@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { formatDate } from "@/lib/utils"
-import { updateSubmission } from "@/lib/supabase/submissions"
+import { updateSubmission } from "@/lib/services/submissions"
 import { useAuth } from "@/contexts/auth-context"
 
 interface PendingSubmissionsProps {

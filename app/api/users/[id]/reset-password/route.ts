@@ -2,7 +2,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
-import { getUserById } from "@/lib/supabase/users"
+import { getUserById } from "@/lib/services/users"
 
 /**
  * Send password reset email to user

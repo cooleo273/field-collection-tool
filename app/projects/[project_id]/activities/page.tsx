@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, Calendar } from "lucide-react"
-import { getCampaigns, createCampaign, deleteCampaign, Campaign, getCampaignById } from "@/lib/supabase/campaigns"
-import { getAdminCampaigns } from "@/lib/supabase/campaign-admins"
+import { getCampaigns, createCampaign, deleteCampaign, Campaign, getCampaignById } from "@/lib/services/campaigns"
+import { getAdminCampaigns } from "@/lib/services/campaign-admins"
 import { formatDate } from "@/lib/utils"
 import { AddCampaignDialog } from "@/components/admin/add-campaign-dialog"
 import { EditCampaignDialog } from "@/components/admin/edit-campaign-dialog"
@@ -44,30 +44,27 @@ export default function ProjectActivitiesPage() {
   useEffect(() => {
     if (!projectId) return;
     
-    console.log("Activities page - URL project ID:", projectId);
-    console.log("Activities page - Current project:", currentProject?.id);
-    
     // Get the current localStorage value
     const currentStoredId = typeof window !== 'undefined' ? 
       localStorage.getItem('selectedProjectId') : null;
     
     // If URL doesn't match localStorage, update URL to match localStorage
     if (currentStoredId && currentStoredId !== projectId) {
-      console.log("URL doesn't match localStorage, redirecting to correct project");
+       ("URL doesn't match localStorage, redirecting to correct project");
       window.location.href = `/projects/${currentStoredId}/activities`;
       return;
     }
     
     // If localStorage doesn't match URL, update localStorage to match URL
     if (projectId && (!currentStoredId || currentStoredId !== projectId)) {
-      console.log("localStorage doesn't match URL, updating localStorage");
+       ("localStorage doesn't match URL, updating localStorage");
       localStorage.setItem('selectedProjectId', projectId);
       refreshProjectFromStorage();
     }
     
     // If current project doesn't match URL, refresh from storage
     if (!currentProject || currentProject.id !== projectId) {
-      console.log("Current project doesn't match URL, refreshing from storage");
+       ("Current project doesn't match URL, refreshing from storage");
       refreshProjectFromStorage();
     }
   }, [projectId, currentProject, refreshProjectFromStorage]);
@@ -83,8 +80,6 @@ export default function ProjectActivitiesPage() {
       return
     }
     if (!userProfile) return
-
-    console.log("Loading activities for project:", projectId)
     setLoading(true)
     try {
       let campaignsData: Campaign[] = [];
@@ -96,7 +91,6 @@ export default function ProjectActivitiesPage() {
         try {
           // If user is not admin, get campaigns assigned to them
           const adminCampaigns = await getAdminCampaigns(userProfile.id);
-          console.log("Admin campaigns data:", adminCampaigns);
           
           if (adminCampaigns && Array.isArray(adminCampaigns) && adminCampaigns.length > 0) {
             // Properly extract campaign data from admin campaigns
@@ -131,17 +125,6 @@ export default function ProjectActivitiesPage() {
           }
         }
       }
-      
-      // Filter campaigns by project if needed
-      // This assumes campaigns have a project_id field
-      if (projectId) {
-        campaignsData = campaignsData.filter(campaign => 
-          campaign.project_id === projectId || !campaign.project_id
-        );
-      }
-      
-      setCampaigns(campaignsData)
-      console.log("Loaded activities:", campaignsData)
     } catch (error) {
       console.error("Error loading activities:", error)
       toast({

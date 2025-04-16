@@ -15,7 +15,7 @@ import {
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
 // Update imports
-import { getPromoterDashboardStats } from "@/lib/supabase/submissions"
+import { getPromoterDashboardStats } from "@/lib/services/submissions"
 // Remove these imports as they're no longer needed
 // import { subscribeToSubmissions, unsubscribe } from "@/lib/supabase/real-time"
 // import type { RealtimeChannel } from "@supabase/supabase-js"

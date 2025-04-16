@@ -10,12 +10,13 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { getSupabaseClient } from "@/lib/services/client"
 import { useAuth } from "@/contexts/auth-context"
 import { DashboardLayout } from "@/components/dashboard-layout"
-import { getSubmissionPhotos } from "@/lib/supabase/submissions"
+
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getSubmissionPhotosById } from "@/lib/repositories/submissions"
 
 // Match the database schema
 interface Submission {
@@ -127,7 +128,7 @@ export default function SubmissionDetailsPage() {
       const fetchPhotos = async () => {
         try {
           // Get photos from the submission_photos table
-          const photoData = await getSubmissionPhotos(submission.id)
+          const photoData = await getSubmissionPhotosById(submission.id)
           
           if (photoData && photoData.length > 0) {
             // Extract the photo URLs
@@ -173,7 +174,6 @@ export default function SubmissionDetailsPage() {
         return
       }
 
-      console.log("Participant added successfully:", data)
       // Optionally, refresh the submission or participants list here
     } catch (error) {
       console.error("Error adding participant:", error)
@@ -205,7 +205,7 @@ export default function SubmissionDetailsPage() {
         return
       }
 
-      console.log("Participant added successfully:", data)
+       
       setSubmittedParticipants((prev) => prev + 1)
       setParticipantName("")
       setParticipantAge("")
