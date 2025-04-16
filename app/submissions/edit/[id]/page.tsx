@@ -32,8 +32,8 @@ import {
   updateSubmission,
 } from "@/lib/services/submissions";
 import { uploadImage } from "@/lib/services/storage.service";
-import { getLocations } from "@/lib/services/locations";
-import { getCampaigns } from "@/lib/services/campaigns";
+import { getLocations } from "@/lib/services/locations.service";
+import { getCampaigns } from "@/lib/services/campaigns.service";
 import { useAuth } from "@/contexts/auth-context";
 import { ArrowLeft, Camera } from "lucide-react";
 import { supabase } from "@/lib/services/client";

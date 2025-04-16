@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, UserCog } from "lucide-react"
-import { getUsersByRole, deleteUser } from "@/lib/services/users"
+import { getUsersByRole, deleteUser } from "@/lib/services/users.service"
 import { formatDate } from "@/lib/utils"
 import { AddProjectAdminDialog } from "@/components/admin/add-project-admin-dialog"
 import { EditProjectAdminDialog } from "@/components/admin/edit-project-admin-dialog"

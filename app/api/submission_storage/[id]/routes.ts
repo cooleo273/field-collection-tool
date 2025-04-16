@@ -5,5 +5,5 @@ const submissionController = new SubmissionController();
 
 export async function GET(req: NextRequest, {params}: {params: {id: string}}) {
 const {id} = await params// Extract the ID from the request parameters
-return submissionController.getSubmissionPhotosStorage(req, id); // Pass the ID to the controller method
+return submissionController.getSubmissionPhotosStorage(req, { id }); // Pass the ID to the controller method
 }

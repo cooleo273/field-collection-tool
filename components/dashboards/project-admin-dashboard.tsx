@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
-import { getProjectAdminDashboardStats } from "@/lib/services/admin-stats"
+import { getProjectAdminDashboardStats } from "@/lib/services/admin-stats.service"
 import { useAuth } from "@/contexts/auth-context"
 
 // First, let's define interfaces for our data types

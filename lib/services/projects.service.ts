@@ -1,44 +1,47 @@
 import { getSupabaseClient } from "./client"
 import { supabase } from "./client"
 
-export async function getProjectByAdmin(adminId: string) {
-  const { data, error } = await supabase
-    .from('project_admins')
-    .select(`
-      projects!inner (
-        id,
-        name,
-        description,
-        start_date,
-        end_date,
-        status,
-        created_at,
-        updated_at
-      )
-    `)
-    .eq('user_id', adminId)
-
-  if (error) {
-    console.error('Error fetching project:', error)
-    return null
-  }
-
-  // Return the first project if exists
-  return data && data.length > 0 ? data[0].projects : null
-}
 
 interface Project {
-    id: string
-    name: string
-    description: string
-    start_date: string
-    end_date: string
-    status: "planning" | "active" | "completed" | "on_hold"
-    created_at: string
-    updated_at: string
+  id: string
+  name: string
+  description: string
+  start_date: string
+  end_date: string
+  status: "planning" | "active" | "completed" | "on_hold"
+  created_at: string
+  updated_at: string
 }
 
-export async function createProjects(projects: Omit<Project, "id" | "created_at" | "updated_at">): Promise<Project> {
+export default class ProjectService {
+  constructor() {}
+
+  async getProjectByAdmin(adminId: string) {
+    const { data, error } = await supabase
+      .from('project_admins')
+      .select(`
+        projects!inner (
+          id,
+          name,
+          description,
+          start_date,
+          end_date,
+          status,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq('user_id', adminId)
+
+    if (error) {
+      console.error('Error fetching project:', error)
+      return null
+    }
+
+    // Return the first project if exists
+    return data && data.length > 0 ? data[0].projects : null
+  }
+  async createProjects(projects: Omit<Project, "id" | "created_at" | "updated_at">): Promise<Project> {
     try {
       const { data, error } = await supabase
         .from("projects")
@@ -65,8 +68,7 @@ export async function createProjects(projects: Omit<Project, "id" | "created_at"
       throw error
     }
 }
-
-export async function getProjects() {
+async getProjects() {
   try {
     const { data, error } = await supabase
       .from("projects")
@@ -84,8 +86,7 @@ export async function getProjects() {
     throw error
   }
 }
-
-export async function getProjectById(id: string) {
+async getProjectById(id: string) {
   try {
     const { data, error } = await supabase
       .from("projects")
@@ -104,8 +105,7 @@ export async function getProjectById(id: string) {
     throw error
   }
 }
-
-export async function updateProject(id: string, updates: Partial<Omit<Project, "id" | "created_at">>) {
+async updateProject(id: string, updates: Partial<Omit<Project, "id" | "created_at">>) {
   try {
     const { data, error } = await supabase
       .from("projects")
@@ -128,8 +128,7 @@ export async function updateProject(id: string, updates: Partial<Omit<Project, "
     throw error
   }
 }
-
-export async function deleteProject(id: string) {
+ async deleteProject(id: string) {
   try {
     const { error } = await supabase
       .from("projects")
@@ -148,6 +147,39 @@ export async function deleteProject(id: string) {
   }
 }
 
+ // Fixed type annotations and corrected the logic for transforming project data
+async getAssignedProjects(userId: string): Promise<AssignedProject[]> {
+  const supabase = getSupabaseClient();
+
+  try {
+    const { data: projectAdmins, error } = await supabase
+      .from("project_admins")
+      .select(`
+        project_id,
+        projects (
+          id,
+          name
+        )
+      `)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+
+    // Transform the data to match AssignedProject interface
+    const projects: AssignedProject[] =
+      projectAdmins?.map((admin: ProjectAdmin) => ({
+        id: admin.project_id,
+        name: admin.projects[0]?.name || "Unnamed Project",
+      })) || [];
+
+    console.log("Fetched projects:", projects);
+    return projects;
+  } catch (error) {
+    console.error("Error loading assigned projects:", error);
+    return [];
+  }
+}
+}
 
 interface AssignedProject {
   id: string;
@@ -162,33 +194,3 @@ interface ProjectAdmin {
   }[];
 }
 
-export async function getAssignedProjects(userId: string): Promise<AssignedProject[]> {
-  const supabase = getSupabaseClient()
-  
-  try {
-    const { data: projectAdmins, error } = await supabase
-      .from('project_admins')
-      .select(`
-        project_id,
-        projects (
-          id,
-          name
-        )
-      `)
-      .eq('user_id', userId)
-
-    if (error) throw error
-
-    // Transform the data to match AssignedProject interface
-    const projects = projectAdmins?.map(admin => ({
-      id: admin.project_id,
-      name: admin.projects.name || 'Unnamed Project'
-    })) || []
-
-     ('Fetched projects:', projects)
-    return projects
-  } catch (error) {
-    console.error("Error loading assigned projects:", error)
-    return []
-  }
-}

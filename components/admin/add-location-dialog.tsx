@@ -30,8 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { createLocation } from "@/lib/services/locations"
-import type { Location } from "@/lib/services/locations"
+import { createLocation } from "@/lib/services/locations.service"
+import type { Location } from "@/lib/services/locations.service"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),

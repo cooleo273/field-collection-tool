@@ -16,9 +16,9 @@ import {
 } from "lucide-react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
-import { getLocationCount } from "@/lib/services/locations"
-import { getCampaignCount } from "@/lib/services/campaigns"
-import { getUserCount } from "@/lib/services/users"
+import { getLocationCount } from "@/lib/services/locations.service"
+import { getCampaignCount } from "@/lib/services/campaigns.service"
+import { getUserCount } from "@/lib/services/users.service"
 import { getSubmissionCount } from "@/lib/services/submissions"
 
 export function AdminDashboard() {

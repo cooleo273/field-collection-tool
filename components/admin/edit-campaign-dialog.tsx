@@ -28,7 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
-import { updateCampaign, Campaign } from "@/lib/services/campaigns"
+import { updateCampaign, Campaign } from "@/lib/services/campaigns.service"
 import { useToast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({

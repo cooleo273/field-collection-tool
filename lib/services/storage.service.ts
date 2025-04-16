@@ -59,14 +59,14 @@ export default class StorageService{
       throw error
     }
   }
+   getPublicUrl(path: string): string {
+    const { data: { publicUrl } } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(path)
+    return publicUrl
+  } 
 }
 
 
 
 
-export function getPublicUrl(path: string): string {
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(path)
-  return publicUrl
-} 

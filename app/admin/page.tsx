@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { getUserCount } from "@/lib/services/users"
+import { getUserCount } from "@/lib/services/users.service"
 import { getSubmissionCount, getRecentSubmissions } from "@/lib/services/submissions"
-import { getCampaignCount } from "@/lib/services/campaigns"
-import { getLocationCount } from "@/lib/services/locations"
+import { getCampaignCount } from "@/lib/services/campaigns.service"
+import { getLocationCount } from "@/lib/services/locations.service"
 import { Users, Map, ClipboardList, Calendar } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 

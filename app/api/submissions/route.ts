@@ -5,4 +5,5 @@ const submissionController = new SubmissionController();
 
 export async function GET(req: NextRequest) {
     return submissionController.getSubmissions(req);
+
 }
