@@ -36,11 +36,20 @@ const COMMUNITY_GROUPS = [
     "Rural radio listeners",
     "Others",
 ]
+const ACTIVITY_STREAM =[
+    "Training", 
+    "Workshop",
+    "Mass Awareness",
+    "DFS Brief",
+    "Panel Discussion",
+    "IEC Material Distribution",
+    "BroadCast Monitoring"
+]
 
 // Updated form schema to match the database schema
 const formSchema = z.object({
-    campaign_id: z.string().min(1, "Campaign is required"),
-    location_id: z.string().min(1, "Location is required"),
+    activity_stream: z.string().min(1, "Activity is required"),
+    location: z.string().min(1, "Location is required"),
     community_group_type: z.string().min(1, "Community group type is required"),
     participant_count: z.coerce.number().min(1, "At least one participant is required"),
     key_issues: z.string().min(10, "Please provide more details about key issues discussed"),
@@ -60,8 +69,8 @@ export default function NewSubmissionPage() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            campaign_id: "",
-            location_id: "",
+            activity_stream:"",
+            location: "",
             community_group_type: "",
             participant_count: 0,
             key_issues: "",
@@ -69,59 +78,40 @@ export default function NewSubmissionPage() {
         },
     })
 
-    useEffect(() => {
-        const loadData = async () => {
-            if (!userProfile) return
+    // useEffect(() => {
+    // //     const loadData = async () => {
+    // //         if (!userProfile) return
 
-            setIsLoading(true)
-            try {
-                // Get only assigned campaigns instead of all campaigns
-                const campaignsData = await getAssignedCampaigns(userProfile.id)
+    // //         setIsLoading(true)
+    // //         try {
+    // //             // Get only assigned campaigns instead of all campaigns
+    // //             const campaignsData = await getAssignedCampaigns(userProfile.id)
                 
-                if (campaignsData.length === 0) {
-                    toast({
-                        title: "No Assigned Campaigns",
-                        description: "You need to be assigned to a campaign before creating submissions.",
-                        variant: "destructive",
-                    })
-                    // router.push("/dashboard")
-                    return
-                }
+    // //             if (campaignsData.length === 0) {
+    // //                 toast({
+    // //                     title: "No Assigned Campaigns",
+    // //                     description: "You need to be assigned to a campaign before creating submissions.",
+    // //                     variant: "destructive",
+    // //                 })
+    // //                 // router.push("/dashboard")
+    // //                 return
+    // //             }
                 
-                setCampaigns(campaignsData)
-            } catch (error) {
-                console.error("Error loading data:", error)
-                toast({
-                    title: "Error",
-                    description: "Failed to load assigned campaigns. Please try again.",
-                    variant: "destructive",
-                })
-            } finally {
-                setIsLoading(false)
-            }
-        }
+    // //             setCampaigns(campaignsData)
+    // //         } catch (error) {
+    // //             console.error("Error loading data:", error)
+    // //             toast({
+    // //                 title: "Error",
+    // //                 description: "Failed to load assigned campaigns. Please try again.",
+    // //                 variant: "destructive",
+    // //             })
+    // //         } finally {
+    // //             setIsLoading(false)
+    // //         }
+    // //     }
 
-        loadData()
-    }, [userProfile, toast, router])
-
-    // Load locations when campaign changes
-    useEffect(() => {
-        const loadLocations = async () => {
-            try {
-                const locationsData = await getLocations()
-                setLocations(locationsData);
-            } catch (error) {
-                console.error("Error loading locations:", error)
-                toast({
-                    title: "Error",
-                    description: "Failed to load locations. Please try again.",
-                    variant: "destructive",
-                })
-            }
-        }
-
-        loadLocations()
-    }, [form.watch("campaign_id"), toast])
+    // //     loadData()
+    // // }, [userProfile, toast, router])
 
     const handleImageUpload = (url: string) => {
         const currentImages = form.getValues("images")
@@ -143,8 +133,8 @@ export default function NewSubmissionPage() {
         try {
             // Create the submission
             const submission = await createSubmission({
-                campaign_id: values.campaign_id,
-                location_id: values.location_id,
+                activity_stream: values.activity_stream,
+                location: values.location,
                 community_group_type: values.community_group_type,
                 participant_count: values.participant_count,
                 key_issues: values.key_issues,
@@ -232,20 +222,20 @@ export default function NewSubmissionPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
-                                        name="campaign_id"
+                                        name="activity_stream"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Campaign</FormLabel>
+                                                <FormLabel>Activity</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger className="h-10">
-                                                            <SelectValue placeholder="Select a campaign" />
+                                                            <SelectValue placeholder="Select an activity" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {campaigns.map((campaign) => (
-                                                            <SelectItem key={campaign.id} value={campaign.id}>
-                                                                {campaign.name}
+                                                    {ACTIVITY_STREAM.map((group) => (
+                                                            <SelectItem key={group} value={group}>
+                                                                {group}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -257,25 +247,13 @@ export default function NewSubmissionPage() {
 
                                     <FormField
                                         control={form.control}
-                                        name="location_id"
+                                        name="location"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Location</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-10">
-                                                            <SelectValue placeholder="Select a location" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {locations.map((location) => (
-                                                            <SelectItem key={location.id} value={location.id}>
-                                                                {location.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
+                                                <FormControl>
+                                                    <Input type="text" className="h-10" {...field} />
+                                                </FormControl>
                                             </FormItem>
                                         )}
                                     />

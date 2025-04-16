@@ -48,9 +48,7 @@ export default function SubmissionsPage() {
         const { data, error } = await supabase
           .from("submissions")
           .select(`
-            *,
-            campaigns(name),
-            locations(name)
+            *
           `)
           .eq("submitted_by", userProfile.id)
           .order("created_at", { ascending: false })

@@ -131,9 +131,8 @@ export interface Database {
       submissions: {
         Row: {
           id: string
-          campaign_id: string | null
-          location_id: string | null
-          community_group_id: string | null
+          activity_stream: string | null
+          location: string | null
           community_group_type: string
           participant_count: number
           key_issues: string | null
@@ -149,9 +148,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          campaign_id?: string | null
-          location_id?: string | null
-          community_group_id?: string | null
+          activity_stream?: string | null
+          location?: string | null
           community_group_type: string
           participant_count: number
           key_issues?: string | null
@@ -167,9 +165,8 @@ export interface Database {
         }
         Update: {
           id?: string
-          campaign_id?: string | null
-          location_id?: string | null
-          community_group_id?: string | null
+          activity_stream?: string | null
+          location?: string | null
           community_group_type?: string
           participant_count?: number
           key_issues?: string | null
@@ -182,20 +179,6 @@ export interface Database {
           sync_status?: string
           created_at?: string
           updated_at?: string
-        }
-      }
-      campaign_admins: {
-        Row: {
-          user_id: string
-          campaign_id: string
-        }
-        Insert: {
-          user_id: string
-          campaign_id: string
-        }
-        Update: {
-          user_id?: string
-          campaign_id?: string
         }
       }
     }

@@ -100,8 +100,6 @@ export default function ProjectAdminPromotersPage() {
       }
     }
   }, [projectId, currentProject, setCurrentProject]);
-  
-  
 
   const loadPromoters = async () => {
     if (!projectId) {
@@ -133,11 +131,11 @@ export default function ProjectAdminPromotersPage() {
     }
   }
 
-  // Update useEffect to include userProfile in dependencies
+  // (2) Only call loadPromoters once userProfile and valid projectId are available.
   useEffect(() => {
-    if (userProfile) {
-      loadPromoters()
-    }
+    if (!userProfile || !projectId) return;
+    
+    loadPromoters();
   }, [userProfile, projectId])
 
   const handleEditPromoter = (promoter: any) => {

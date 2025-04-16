@@ -64,9 +64,7 @@ export async function getSubmissionById(id: string) {
     const { data, error } = await supabase
       .from("submissions")
       .select(`
-        *,
-        campaigns(name),
-        locations(name)
+        *
       `)
       .eq("id", id)
       .single()

@@ -82,6 +82,12 @@ export function Sidebar() {
         icon: PieChart 
       },
     ],
+    promoter: [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "New Submission", href: "/submissions/new", icon: Upload },
+      { name: "My Submissions", href: "/submissions", icon: ClipboardList },
+      { name: "Reports", href: "/submissions/reports", icon: PieChart },
+    ]
     // Promoter items remain unchanged
   }
 

@@ -14,12 +14,14 @@ import { getSupabaseClient } from "@/lib/supabase/client"
 import { useAuth } from "@/contexts/auth-context"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { getSubmissionPhotos } from "@/lib/supabase/submissions"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Match the database schema
 interface Submission {
   id: string
-  campaign_id: string
-  location_id: string
+  activity_stream: string
+  location: string
   community_group_type: string
   participant_count: number
   key_issues: string
@@ -46,6 +48,12 @@ export default function SubmissionDetailsPage() {
   const { userProfile } = useAuth()
   const supabase = getSupabaseClient()
 
+  const [participantName, setParticipantName] = useState("")
+  const [participantAge, setParticipantAge] = useState("")
+  const [participantPhoneNumber, setParticipantPhoneNumber] = useState("")
+  const [participantGender, setParticipantGender] = useState("")
+  const [submittedParticipants, setSubmittedParticipants] = useState<number>(0)
+
   useEffect(() => {
     if (!userProfile && !loading) {
       router.push("/login")
@@ -64,8 +72,6 @@ export default function SubmissionDetailsPage() {
         .from("submissions")
         .select(`
           *,
-          campaigns(name),
-          locations(name),
           users:submitted_by(name, email)
         `)
         .eq("id", id)
@@ -152,6 +158,63 @@ export default function SubmissionDetailsPage() {
       fetchPhotos()
     }
   }, [submission, supabase])
+
+  const handleAddParticipant = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("participants")
+        .insert({
+          submission_id: submission?.id,
+          created_at: new Date().toISOString(),
+        })
+
+      if (error) {
+        console.error("Error adding participant:", error)
+        return
+      }
+
+      console.log("Participant added successfully:", data)
+      // Optionally, refresh the submission or participants list here
+    } catch (error) {
+      console.error("Error adding participant:", error)
+    }
+  }
+
+  const handleParticipantSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!participantName.trim() || !participantAge.trim() || !participantPhoneNumber.trim() || !participantGender.trim()) {
+      alert("All fields are required.")
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("participants")
+        .insert({
+          submission_id: submission?.id,
+          name: participantName,
+          age: parseInt(participantAge, 10),
+          phone_number: participantPhoneNumber,
+          gender: participantGender,
+          created_at: new Date().toISOString(),
+        })
+
+      if (error) {
+        console.error("Error adding participant:", error)
+        return
+      }
+
+      console.log("Participant added successfully:", data)
+      setSubmittedParticipants((prev) => prev + 1)
+      setParticipantName("")
+      setParticipantAge("")
+      setParticipantPhoneNumber("")
+      setParticipantGender("")
+    } catch (error) {
+      console.error("Error adding participant:", error)
+    }
+  }
 
   if (loading) {
     return (
@@ -382,6 +445,67 @@ export default function SubmissionDetailsPage() {
               </CardContent>
             </Card>
           </div>
+        </div>
+        <div className="space-y-6">
+          <Card className="border-2 shadow-sm">
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-lg">Add Participants</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {submittedParticipants < submission.participant_count ? (
+                <form onSubmit={handleParticipantSubmit} className="space-y-4">
+                  <Input
+                    type="text"
+                    placeholder="Enter participant name"
+                    value={participantName}
+                    onChange={(e) => setParticipantName(e.target.value)}
+                    className="w-full"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Enter participant age"
+                    value={participantAge}
+                    onChange={(e) => setParticipantAge(e.target.value)}
+                    className="w-full"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Enter phone number"
+                    value={participantPhoneNumber}
+                    onChange={(e) => setParticipantPhoneNumber(e.target.value)}
+                    className="w-full"
+                  />
+                  <Select onValueChange={setParticipantGender} value={participantGender}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button type="submit" variant="default" className="w-full">
+                    Add Participant
+                  </Button>
+                </form>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  All participants have been added.
+                </p>
+              )}
+            </CardContent>
+            <CardFooter>
+              <p className="text-sm text-muted-foreground">
+                {submittedParticipants}/{submission.participant_count} participants added.
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={handleAddParticipant} variant="default">
+            Add Participant
+          </Button>
         </div>
       </div>
     </DashboardLayout>
