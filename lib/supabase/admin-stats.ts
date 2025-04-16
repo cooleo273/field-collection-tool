@@ -32,47 +32,29 @@ interface DashboardData {
   campaignPerformance: CampaignPerformanceData[];
 }
 
-export async function getProjectAdminDashboardStats(userId: string): Promise<DashboardData> {
+export async function getProjectAdminDashboardStats(userId: string, projectId: string): Promise<DashboardData> {
   const supabase = getSupabaseClient()
   
   try {
-    console.log("Getting stats for admin:", userId)
-    
-    // Get all submissions
-    const { data: allSubmissions, error: submissionsError } = await supabase
-      .from('submissions')
-      .select('*')
-    
-    if (submissionsError) {
-      console.error("Error fetching submissions:", submissionsError)
-      throw submissionsError
-    }
-    
-    // Get campaigns
+    // Get campaigns for this project
     const { data: campaigns, error: campaignsError } = await supabase
       .from('campaigns')
       .select('*')
+      .eq('project_id', projectId)
     
-    if (campaignsError) {
-      console.error("Error fetching campaigns:", campaignsError)
-      throw campaignsError
-    }
+    if (campaignsError) throw campaignsError
+
+    const campaignIds = campaigns?.map(c => c.id) || []
+
+    // Get submissions for these campaigns
+    const { data: allSubmissions, error: submissionsError } = await supabase
+      .from('submissions')
+      .select('*')
+      .in('campaign_id', campaignIds)
     
-    // Get locations from submissions
-    const uniqueLocations = new Set()
-    if (allSubmissions) {
-      allSubmissions.forEach(submission => {
-        if (submission.location_id) {
-          uniqueLocations.add(submission.location_id)
-        }
-      })
-    }
+    if (submissionsError) throw submissionsError
     
-    // Count submissions by status
-    const pendingSubmissions = allSubmissions ? 
-      allSubmissions.filter(s => s.status === 'submitted').length : 0
-    
-    // Get recent submissions - without trying to join with profiles
+    // Get recent submissions with related data
     const { data: recentSubmissions, error: recentError } = await supabase
       .from('submissions')
       .select(`
@@ -80,29 +62,28 @@ export async function getProjectAdminDashboardStats(userId: string): Promise<Das
         campaigns(name),
         locations(name)
       `)
+      .in('campaign_id', campaignIds)
       .order('created_at', { ascending: false })
       .limit(5)
     
-    if (recentError) {
-      console.error("Error fetching recent submissions:", recentError)
-      throw recentError
-    }
+    if (recentError) throw recentError
+
+    // Get locations from submissions
+    const uniqueLocations = new Set(allSubmissions?.map(s => s.location_id).filter(Boolean))
     
-    // If we need user information, we can fetch it separately
-    if (recentSubmissions && recentSubmissions.length > 0) {
-      // Get unique user IDs from submissions
-      const userIds = [...new Set(recentSubmissions
-        .filter(s => s.user_id)
-        .map(s => s.user_id))]
+    // Count pending submissions
+    const pendingSubmissions = allSubmissions?.filter(s => s.status === 'submitted').length || 0
+
+    // Add user info to recent submissions
+    if (recentSubmissions?.length > 0) {
+      const userIds = [...new Set(recentSubmissions.filter(s => s.user_id).map(s => s.user_id))]
       
       if (userIds.length > 0) {
-        // Fetch user profiles
         const { data: profiles } = await supabase
-          .from('users') // Use the correct table name for user profiles
+          .from('users')
           .select('id, full_name, email')
           .in('id', userIds)
         
-        // Add user info to submissions
         if (profiles) {
           const userMap = new Map(profiles.map(p => [p.id, p]))
           recentSubmissions.forEach(submission => {
@@ -113,20 +94,20 @@ export async function getProjectAdminDashboardStats(userId: string): Promise<Das
         }
       }
     }
-    
-    // Make sure your function returns all these properties
+
     return {
       stats: {
         campaigns: campaigns?.length || 0,
         submissions: allSubmissions?.length || 0,
-        pendingSubmissions: pendingSubmissions,
+        pendingSubmissions,
         locations: uniqueLocations.size,
       },
       recentSubmissions: recentSubmissions || [],
       submissionTrends: calculateSubmissionTrends(allSubmissions || []),
       statusDistribution: calculateStatusDistribution(allSubmissions || []),
       campaignPerformance: calculateCampaignPerformance(allSubmissions || [], campaigns || [])
-    };
+    }
+    
   } catch (error) {
     console.error('Error fetching admin dashboard stats:', error)
     throw error

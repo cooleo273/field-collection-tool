@@ -17,9 +17,9 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 import { createSubmission } from "@/lib/supabase/submissions"
 import { uploadImage } from "@/lib/supabase/storage"
 import { getLocations, getLocationsByCampaign } from "@/lib/supabase/locations"
-import { getCampaigns } from "@/lib/supabase/campaigns"
+import { getAssignedCampaigns, getCampaigns } from "@/lib/supabase/campaigns"
 import { useAuth } from "@/contexts/auth-context"
-import { ArrowLeft, Camera, Upload } from "lucide-react"
+import { ArrowLeft, Camera, ClipboardList, Upload } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { DashboardLayout } from "@/components/dashboard-layout"
 
@@ -75,13 +75,25 @@ export default function NewSubmissionPage() {
 
             setIsLoading(true)
             try {
-                const campaignsData = await getCampaigns()
-                setCampaigns(campaignsData);
+                // Get only assigned campaigns instead of all campaigns
+                const campaignsData = await getAssignedCampaigns(userProfile.id)
+                
+                if (campaignsData.length === 0) {
+                    toast({
+                        title: "No Assigned Campaigns",
+                        description: "You need to be assigned to a campaign before creating submissions.",
+                        variant: "destructive",
+                    })
+                    // router.push("/dashboard")
+                    return
+                }
+                
+                setCampaigns(campaignsData)
             } catch (error) {
                 console.error("Error loading data:", error)
                 toast({
                     title: "Error",
-                    description: "Failed to load form data. Please try again.",
+                    description: "Failed to load assigned campaigns. Please try again.",
                     variant: "destructive",
                 })
             } finally {
@@ -90,7 +102,7 @@ export default function NewSubmissionPage() {
         }
 
         loadData()
-    }, [userProfile, toast])
+    }, [userProfile, toast, router])
 
     // Load locations when campaign changes
     useEffect(() => {

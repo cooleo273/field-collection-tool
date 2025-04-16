@@ -1,4 +1,4 @@
-import { supabase } from "./client"
+import { getSupabaseClient, supabase } from "./client"
 
 export interface Campaign {
   id: string
@@ -128,6 +128,45 @@ export async function getCampaignCount() {
   } catch (error) {
     console.error("Error in getCampaignCount:", error)
     return 0
+  }
+}
+
+export async function getAssignedCampaigns(userId: string) {
+  const supabase = getSupabaseClient()
+  
+  try {
+    // First, get the campaign IDs assigned to the user
+    const { data: promoterData, error: promoterError } = await supabase
+      .from('campaign_promoters')
+      .select('campaign_id')
+      .eq('promoter_id', userId)
+
+    if (promoterError) {
+      console.error("Error fetching promoter assignments:", promoterError)
+      return []
+    }
+
+    if (!promoterData || promoterData.length === 0) {
+      return []
+    }
+
+    // Then, get the campaign details
+    const campaignIds = promoterData.map(item => item.campaign_id)
+    const { data: campaigns, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('*')
+      .in('id', campaignIds)
+
+    if (campaignError) {
+      console.error("Error fetching campaigns:", campaignError)
+      return []
+    }
+
+    console.log("Fetched campaigns:", campaigns) // Debug log
+    return campaigns || []
+  } catch (error) {
+    console.error("Error loading assigned campaigns:", error)
+    return []
   }
 }
 

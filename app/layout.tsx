@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
+import { ProjectProvider } from '@/contexts/project-context'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -48,13 +49,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Akofada BCC" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
+        {/* <link rel="manifest" href="/manifest.json" /> */}
       </head>
       <body className={`${inter.className} app-container`}>
         <ThemeProvider attribute="class" defaultTheme="light">
           <AuthProvider>
             <div className="app-content safe-area-top safe-area-bottom">
-              {children}
+              <ProjectProvider>
+                {children}
+              </ProjectProvider>
             </div>
           </AuthProvider>
         </ThemeProvider>

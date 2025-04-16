@@ -50,8 +50,16 @@ interface DashboardData {
   campaignPerformance: CampaignPerformanceData[];
 }
 
+// Add these imports
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Add this import
+import { getAssignedProjects } from "@/lib/supabase/projects"
+
 export function ProjectAdminDashboard() {
   const { userProfile } = useAuth()
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [assignedProjects, setAssignedProjects] = useState<Array<{ id: string; name: string }>>([])
   const [stats, setStats] = useState<DashboardStats>({
     campaigns: 0,
     submissions: 0,
@@ -67,28 +75,58 @@ export function ProjectAdminDashboard() {
   useEffect(() => {
     if (!userProfile?.id) return
     
-    // Store the ID in a local variable to assure TypeScript it's not null
     const userId = userProfile.id
+
+    async function loadAssignedProjects() {
+      try {
+        setLoading(true)
+        const projects = await getAssignedProjects(userId)
+        console.log('Loaded projects:', projects)
+        
+        if (projects.length > 0) {
+          setAssignedProjects(projects)
+          // Get stored project ID
+          const storedProjectId = localStorage.getItem('selectedProjectId')
+          // Set stored project if it exists and is valid, otherwise use first project
+          if (storedProjectId && projects.some(p => p.id === storedProjectId)) {
+            setSelectedProjectId(storedProjectId)
+          } else if (!selectedProjectId) {
+            setSelectedProjectId(projects[0].id)
+          }
+        }
+      } catch (error) {
+        console.error("Error loading assigned projects:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadAssignedProjects()
+  }, [userProfile]) // Remove selectedProjectId from dependencies
+
+  // Add effect to store selected project
+  useEffect(() => {
+    if (selectedProjectId) {
+      localStorage.setItem('selectedProjectId', selectedProjectId)
+    }
+  }, [selectedProjectId])
+
+  useEffect(() => {
+    if (!selectedProjectId || !userProfile?.id) return
 
     async function loadStats() {
       try {
         setLoading(true)
-        console.log("Fetching stats for user ID:", userId)
-        const { 
-          stats: dashboardStats, 
-          recentSubmissions: recent,
-          submissionTrends: trends,
-          statusDistribution: statuses,
-          campaignPerformance: campaigns
-        } = await getProjectAdminDashboardStats(userId) as DashboardData
+        // Ensure userProfile and selectedProjectId are not null
+        if (!userProfile || !selectedProjectId) return
         
-        console.log("Received stats:", dashboardStats)
+        const data = await getProjectAdminDashboardStats(userProfile.id, selectedProjectId)
         
-        setStats(dashboardStats)
-        setRecentSubmissions(recent || [])
-        setSubmissionTrends(trends || [])
-        setStatusDistribution(statuses || [])
-        setCampaignPerformance(campaigns || [])
+        setStats(data.stats)
+        setRecentSubmissions(data.recentSubmissions)
+        setSubmissionTrends(data.submissionTrends)
+        setStatusDistribution(data.statusDistribution)
+        setCampaignPerformance(data.campaignPerformance)
       } catch (error) {
         console.error("Error loading dashboard stats:", error)
       } finally {
@@ -97,44 +135,43 @@ export function ProjectAdminDashboard() {
     }
 
     loadStats()
-  }, [userProfile])
-
-  if (loading) {
-    return <LoadingSpinner />
-  }
+  }, [userProfile, selectedProjectId])
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Project Dashboard</h1>
-        <Button variant="outline" size="sm">
-          <FileDown className="mr-2 h-4 w-4" />
-          Download Report
-        </Button>
+        <div className="flex items-center gap-4">
+          <Select value={selectedProjectId || ''} onValueChange={setSelectedProjectId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select a project" />
+            </SelectTrigger>
+            <SelectContent>
+              {assignedProjects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <FileDown className="mr-2 h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
       </div>
 
+      {/* Update the card titles */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.submissions.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.campaigns.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              From all your campaigns
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Submissions</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingSubmissions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting review
+              In this project
             </p>
           </CardContent>
         </Card>

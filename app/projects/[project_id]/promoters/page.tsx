@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, UserPlus, MapPin } from "lucide-react"
-import { getUsers, deleteUser } from "@/lib/supabase/users"
+import { getUsers, deleteUser, getProjectPromoters } from "@/lib/supabase/users"
 import { AddPromoterDialog } from "@/components/admin/add-promoter-dialog"
 import { EditUserDialog } from "@/components/admin/edit-user-dialog"
 import { AssignLocationsDialog } from "@/components/admin/assign-locations-dialog"
@@ -22,8 +22,48 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useParams } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { useProject } from "@/contexts/project-context"
 
 export default function ProjectAdminPromotersPage() {
+  const params = useParams()
+  const projectId = params.project_id as string
+  const { userProfile } = useAuth()
+  // Update the useProject import to get the new refreshProjectFromStorage function
+  const { currentProject, setCurrentProject, refreshProjectFromStorage } = useProject();
+  
+  // Update the effect that syncs with URL
+  useEffect(() => {
+    if (!projectId) return;
+    
+    console.log("Promoters page - URL project ID:", projectId);
+    console.log("Promoters page - Current project:", currentProject?.id);
+    
+    // Get the current localStorage value
+    const currentStoredId = typeof window !== 'undefined' ? 
+      localStorage.getItem('selectedProjectId') : null;
+    
+    // If URL doesn't match localStorage, update URL to match localStorage
+    if (currentStoredId && currentStoredId !== projectId) {
+      console.log("URL doesn't match localStorage, redirecting to correct project");
+      window.location.href = `/projects/${currentStoredId}/promoters`;
+      return;
+    }
+    
+    // If localStorage doesn't match URL, update localStorage to match URL
+    if (projectId && (!currentStoredId || currentStoredId !== projectId)) {
+      console.log("localStorage doesn't match URL, updating localStorage");
+      localStorage.setItem('selectedProjectId', projectId);
+      refreshProjectFromStorage();
+    }
+    
+    // If current project doesn't match URL, refresh from storage
+    if (!currentProject || currentProject.id !== projectId) {
+      console.log("Current project doesn't match URL, refreshing from storage");
+      refreshProjectFromStorage();
+    }
+  }, [projectId, currentProject, refreshProjectFromStorage]);
   const { toast } = useToast()
   const [promoters, setPromoters] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,13 +72,55 @@ export default function ProjectAdminPromotersPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const [selectedPromoter, setSelectedPromoter] = useState<any>(null)
+  
+  // Update the effect that syncs the current project with URL
+  useEffect(() => {
+    if (!projectId) return;
+    
+    console.log("Promoters page - URL project ID:", projectId);
+    console.log("Promoters page - Current project:", currentProject?.id);
+    
+    // If current project doesn't match URL project ID
+    if (currentProject && currentProject.id !== projectId) {
+      console.log("Project ID mismatch - updating current project");
+      
+      // Update localStorage with the project ID from URL
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('selectedProjectId', projectId);
+        
+        // Import the getProjectById function
+        import('@/lib/supabase/projects').then(({ getProjectById }) => {
+          getProjectById(projectId).then(projectData => {
+            if (projectData) {
+              console.log("Setting current project from URL:", projectData);
+              setCurrentProject(projectData);
+            }
+          });
+        });
+      }
+    }
+  }, [projectId, currentProject, setCurrentProject]);
+  
+  
 
   const loadPromoters = async () => {
+    if (!projectId) {
+      console.error("No project ID found in URL")
+      toast({
+        title: "Error loading promoters",
+        description: "Project ID is missing. Please ensure you're accessing this page correctly.",
+        variant: "destructive",
+      })
+      return
+    }
+    if (!userProfile) return
+
+    console.log("Loading promoters for project:", projectId)
     setLoading(true)
     try {
-      const data = await getUsers()
-      // Filter only promoters
-      setPromoters(data.filter((user) => user.role === "promoter"))
+      const promotersData = await getProjectPromoters(projectId, userProfile.id)
+      setPromoters(promotersData)
+      console.log("Loaded promoters:", promotersData)
     } catch (error) {
       console.error("Error loading promoters:", error)
       toast({
@@ -51,10 +133,12 @@ export default function ProjectAdminPromotersPage() {
     }
   }
 
-  // Load promoters when component mounts
+  // Update useEffect to include userProfile in dependencies
   useEffect(() => {
-    loadPromoters()
-  }, [])
+    if (userProfile) {
+      loadPromoters()
+    }
+  }, [userProfile, projectId])
 
   const handleEditPromoter = (promoter: any) => {
     setSelectedPromoter(promoter)
@@ -215,6 +299,8 @@ export default function ProjectAdminPromotersPage() {
         open={showAddDialog} 
         onOpenChange={setShowAddDialog} 
         onSuccess={loadPromoters} 
+        projectId={projectId}
+        adminId={userProfile?.id || ''}  // Add adminId from userProfile
       />
       
       {selectedPromoter && (

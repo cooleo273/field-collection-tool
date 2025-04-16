@@ -19,14 +19,21 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
+import { useProject } from "@/contexts/project-context"
+// Add this import
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
   const { userProfile, isLoading } = useAuth()
+  const { currentProject, isLoading: projectLoading } = useProject()
 
-  if (isLoading) {
+  console.log("Sidebar - Current Project:", currentProject)
+  console.log("Sidebar - Current Path:", pathname)
+
+  // Wait for both auth and project to load
+  if (isLoading || projectLoading) {
     return (
       <div className="flex h-full flex-col border-r">
         <div className="flex-1 overflow-auto py-4">
@@ -42,29 +49,40 @@ export function Sidebar() {
 
   const userRole = userProfile?.role || "unauthenticated"
 
-  // Define navigation items based on user role
+  // Define navigation items based on user role and current project
   const navigationItems = {
     admin: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Users", href: "/admin/users", icon: Users },
-      { name: "Project Admins", href: "/admin/project-admins", icon: UserCog },
-      { name: "Settings", href: "/admin/settings", icon: Settings },
+      // Admin items remain unchanged
     ],
     "project-admin": [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Promoters", href: "/projects/promoters", icon: Users },
-      { name: "Campaigns", href: "/projects/campaigns", icon: Calendar },
-      { name: "Locations", href: "/projects/locations", icon: Map },
-      { name: "Data Entry", href: "/projects/data-entry", icon: FileInput },
-      { name: "Submissions", href: "/projects/submissions", icon: ClipboardList },
-      { name: "Reports", href: "/projects/reports", icon: PieChart },
+      { 
+        name: "Promoters", 
+        href: currentProject ? `/projects/${currentProject.id}/promoters` : "/dashboard", 
+        icon: Users 
+      },
+      { 
+        name: "Activities", 
+        href: currentProject ? `/projects/${currentProject.id}/activities` : "/dashboard", 
+        icon: Calendar 
+      },
+      { 
+        name: "Locations", 
+        href: currentProject ? `/projects/${currentProject.id}/locations` : "/dashboard", 
+        icon: Map 
+      },
+      { 
+        name: "Submissions", 
+        href: currentProject ? `/projects/${currentProject.id}/submissions` : "/dashboard", 
+        icon: ClipboardList 
+      },
+      { 
+        name: "Reports", 
+        href: currentProject ? `/projects/${currentProject.id}/reports` : "/dashboard", 
+        icon: PieChart 
+      },
     ],
-    promoter: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "New Submission", href: "/submissions/new", icon: Upload },
-      { name: "My Submissions", href: "/submissions", icon: ClipboardList },
-      { name: "Reports", href: "/submissions/reports", icon: PieChart },
-    ],
+    // Promoter items remain unchanged
   }
 
   // Get navigation items for current role

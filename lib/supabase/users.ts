@@ -1,5 +1,4 @@
-import { supabase } from "./client"
-import type { Database } from "@/types/supabase"
+import { getSupabaseClient, supabase } from "./client"
 
 export type User = {
   id: string
@@ -95,6 +94,7 @@ export async function createUserWithAuth(userData: {
   email: string; 
   role: string; 
   status?: string;
+  projectId?: string;
 }) {
   try {
     // Call the server-side API endpoint to create the user
@@ -110,6 +110,32 @@ export async function createUserWithAuth(userData: {
 
     if (!response.ok) {
       throw new Error(data.error || "Failed to create user");
+    }
+
+    // If this is a promoter and we have project ID, create the association
+    if (userData.role === 'promoter' && userData.projectId && data.user?.id) {
+      console.log('Attempting to create project promoter with:', {
+        user_id: data.user.id,
+        project_id: userData.projectId
+      });
+
+      const { data: promoterData, error: projectError } = await supabase
+        .from('project_promoters')
+        .insert({
+          user_id: data.user.id,
+          project_id: userData.projectId
+        })
+        .select()
+        .single();
+
+      if (projectError) {
+        console.error('Error creating project promoter:', projectError);
+        // Clean up the created user if association fails
+        await supabase.from('users').delete().eq('id', data.user.id);
+        throw new Error(`Failed to create project promoter association: ${projectError.message}`);
+      }
+
+      console.log('Successfully created project promoter:', promoterData);
     }
 
     return {
@@ -217,21 +243,204 @@ export async function deleteUser(id: string) {
  */
 export async function getUsersByRole(role: string) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("users")
       .select("*")
       .eq("role", role)
       .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("Error fetching users by role:", error)
-      return []
+    
+    // Add related data based on role
+    if (role === 'project-admin') {
+      query = supabase
+        .from("users")
+        .select(`
+          *,
+          project_admins(
+            project_id,
+            projects(id, name, status)
+          )
+        `)
+        .eq("role", role)
+        .order("created_at", { ascending: false })
+    } else if (role === 'promoter') {
+      query = supabase
+        .from("users")
+        .select(`
+          *,
+          project_promoters(
+            project_id,
+            projects(id, name)
+          ),
+          project_promoter_locations(
+            location_id,
+            project_id
+          )
+        `)
+        .eq("role", role)
+        .order("created_at", { ascending: false })
     }
 
+    const { data, error } = await query
+    
+    if (error) throw error
+    
+    // Process the data based on role
+    let processedData = data
+    
+    if (role === 'project-admin') {
+      processedData = data.map(user => ({
+        ...user,
+        assigned_projects: user.project_admins?.map((pa: any) => ({
+          project_id: pa.project_id,
+          project_name: pa.projects?.name,
+          project_status: pa.projects?.status
+        })) || []
+      }))
+    } else if (role === 'promoter') {
+      processedData = data.map(user => {
+        // Group locations by project
+        const projectLocations: Record<string, string[]> = {}
+        
+        if (user.project_promoter_locations) {
+          user.project_promoter_locations.forEach((ppl: any) => {
+            if (!projectLocations[ppl.project_id]) {
+              projectLocations[ppl.project_id] = []
+            }
+            projectLocations[ppl.project_id].push(ppl.location_id)
+          })
+        }
+        
+        return {
+          ...user,
+          assigned_projects: user.project_promoters?.map((pp: any) => ({
+            project_id: pp.project_id,
+            project_name: pp.projects?.name,
+            assigned_locations: projectLocations[pp.project_id] || []
+          })) || [],
+          // For backward compatibility
+          assignedLocations: user.project_promoter_locations?.map((ppl: any) => ppl.location_id) || []
+        }
+      })
+    }
+    
+    return processedData
+  } catch (error) {
+    console.error(`Error getting users by role ${role}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Assign projects to a project admin
+ */
+export async function assignProjectsToAdmin(adminId: string, projectIds: string[]) {
+  try {
+    // First, delete all existing assignments for this admin
+    const { error: deleteError } = await supabase
+      .from('project_admins')
+      .delete()
+      .eq('user_id', adminId)
+    
+    if (deleteError) throw deleteError
+    
+    // If there are no projects to assign, we're done
+    if (projectIds.length === 0) return
+    
+    // Create new assignments
+    const assignments = projectIds.map(projectId => ({
+      project_id: projectId,
+      user_id: adminId
+    }))
+    
+    const { error: insertError } = await supabase
+      .from('project_admins')
+      .insert(assignments)
+    
+    if (insertError) throw insertError
+    
+    return true
+  } catch (error) {
+    console.error('Error assigning projects to admin:', error)
+    throw error
+  }
+}
+
+/**
+ * Get projects assigned to an admin
+ */
+export async function getAdminProjects(adminId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('project_admins')
+      .select(`
+        project_id,
+        projects(id, name, status)
+      `)
+      .eq('user_id', adminId)
+    
+    if (error) throw error
     return data || []
   } catch (error) {
-    console.error("Error in getUsersByRole:", error)
-    return []
+    console.error('Error getting admin projects:', error)
+    throw error
+  }
+}
+
+/**
+ * Assign locations to a promoter for a specific project
+ */
+export async function assignLocationsToPromoter(userId: string, projectId: string, locationIds: string[]) {
+  try {
+    // First, ensure the user is assigned to the project
+    const { data: existingAssignment, error: checkError } = await supabase
+      .from('project_promoters')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('project_id', projectId)
+      .single()
+    
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      throw checkError
+    }
+    
+    // If not assigned to project, create the assignment
+    if (!existingAssignment) {
+      const { error: assignError } = await supabase
+        .from('project_promoters')
+        .insert({ user_id: userId, project_id: projectId })
+      
+      if (assignError) throw assignError
+    }
+    
+    // Delete existing location assignments for this project
+    const { error: deleteError } = await supabase
+      .from('project_promoter_locations')
+      .delete()
+      .eq('user_id', userId)
+      .eq('project_id', projectId)
+    
+    if (deleteError) throw deleteError
+    
+    // If there are no locations to assign, we're done
+    if (locationIds.length === 0) return
+    
+    // Create new location assignments
+    const assignments = locationIds.map(locationId => ({
+      user_id: userId,
+      project_id: projectId,
+      location_id: locationId
+    }))
+    
+    const { error: insertError } = await supabase
+      .from('project_promoter_locations')
+      .insert(assignments)
+    
+    if (insertError) throw insertError
+    
+    return true
+  } catch (error) {
+    console.error('Error assigning locations to promoter:', error)
+    throw error
   }
 }
 
@@ -302,6 +511,52 @@ export async function createUser(user: {
     return data
   } catch (error) {
     console.error("Error in createUser:", error)
+    throw error
+  }
+}
+
+
+interface PromoterWithProjectData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  assignedLocations: Array<{ location_id: string }>;
+  submissions: Array<{ id: string }>;
+}
+
+export async function getProjectPromoters(projectId: string, adminId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('project_promoters')
+      .select(`
+        users (
+          id,
+          name,
+          email,
+          status,
+          role
+        ),
+        project_promoter_locations!left (
+          location_id
+        )
+      `)
+      .eq('project_id', projectId)
+
+    if (error) {
+      console.error("Error fetching project promoters:", error)
+      throw error
+    }
+
+    // Transform the data to match the expected format
+    return data?.map(item => ({
+      ...item.users,
+      assignedLocations: item.project_promoter_locations || [],
+      submissions: [] // Return empty array for submissions since it's not available
+    })) || []
+  } catch (error) {
+    console.error("Error in getProjectPromoters:", error)
     throw error
   }
 }

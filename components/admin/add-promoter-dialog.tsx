@@ -42,12 +42,16 @@ interface AddPromoterDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  projectId: string    // Add projectId prop
+  adminId: string      // Add adminId prop
 }
 
 export function AddPromoterDialog({
   open,
   onOpenChange,
   onSuccess,
+  projectId,
+  adminId,  // Add adminId to the props
 }: AddPromoterDialogProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -70,6 +74,8 @@ export function AddPromoterDialog({
         email: values.email,
         role: "promoter",
         status: "active",
+        projectId: projectId,
+            // Pass adminId to createUserWithAuth
       })
 
       setGeneratedPassword(result.password)
@@ -79,7 +85,6 @@ export function AddPromoterDialog({
         description: "Promoter added successfully",
       })
       
-      // We don't close the dialog immediately so admin can copy the password
     } catch (error) {
       console.error("Error adding promoter:", error)
       toast({

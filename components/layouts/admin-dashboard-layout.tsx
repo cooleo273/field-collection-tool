@@ -102,6 +102,7 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Project Admins", href: "/admin/project-admins", icon: UserCog },
+    { name: "Projects", href: "/admin/projects", icon: Map },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ]
 
