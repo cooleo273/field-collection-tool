@@ -28,19 +28,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { LoadingSpinner } from "@/components/loading-spinner";
-import {
-  updateSubmission,
-} from "@/lib/services/submissions";
-import { uploadImage } from "@/lib/services/storage.service";
-import { getLocations } from "@/lib/services/locations.service";
-import { getCampaigns } from "@/lib/services/campaigns.service";
+
 import { useAuth } from "@/contexts/auth-context";
 import { ArrowLeft, Camera } from "lucide-react";
 import { supabase } from "@/lib/services/client";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import Image from "next/image";
 import { X } from "lucide-react"; // Add this import
-import { getSubmissionById } from "@/lib/repositories/submissions";
+
 
 const COMMUNITY_GROUPS = [
   "Women Associations",

@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
-import { getProjectAdminDashboardStats } from "@/lib/services/admin-stats.service"
+
 import { useAuth } from "@/contexts/auth-context"
 
 // First, let's define interfaces for our data types
@@ -54,7 +54,9 @@ interface DashboardData {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Add this import
-import { getAssignedProjects } from "@/lib/services/projects"
+
+import { getProjectAdminDashboardStats } from "@/lib/repositories/stats.repository"
+import { getAssignedProjects } from "@/lib/repositories/project.repository"
 
 export function ProjectAdminDashboard() {
   const { userProfile } = useAuth()
@@ -87,7 +89,7 @@ export function ProjectAdminDashboard() {
           // Get stored project ID
           const storedProjectId = localStorage.getItem('selectedProjectId')
           // Set stored project if it exists and is valid, otherwise use first project
-          if (storedProjectId && projects.some(p => p.id === storedProjectId)) {
+          if (storedProjectId && projects.some((p: { id: string }) => p.id === storedProjectId)) {
             setSelectedProjectId(storedProjectId)
           } else if (!selectedProjectId) {
             setSelectedProjectId(projects[0].id)

@@ -18,7 +18,7 @@ export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) 
         className={cn(
           "animate-spin text-muted-foreground",
           sizeClasses[size],
-          className
+          className = "flex"
         )}
       />
     </div>

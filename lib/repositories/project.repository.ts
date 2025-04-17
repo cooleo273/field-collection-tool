@@ -70,3 +70,16 @@ export async function deleteProject(id: string) {
     throw error;
   }
 }
+
+export async function getAssignedProjects(userId: string) {
+  try {
+    const result = await fetch(`/api/project/assigned/${userId}`, {
+      method: 'GET',
+    });
+    const response = await result.json();
+    return response;
+  } catch (error) {
+    console.error('Error in getAssignedProjects:', error);
+    throw error;
+  }
+}

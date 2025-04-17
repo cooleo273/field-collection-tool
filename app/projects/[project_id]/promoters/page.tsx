@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, UserPlus, MapPin } from "lucide-react"
-import { getUsers, deleteUser, getProjectPromoters } from "@/lib/services/users.service"
 import { AddPromoterDialog } from "@/components/admin/add-promoter-dialog"
 import { EditUserDialog } from "@/components/admin/edit-user-dialog"
 import { AssignLocationsDialog } from "@/components/admin/assign-locations-dialog"
@@ -25,6 +24,7 @@ import {
 import { useParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { useProject } from "@/contexts/project-context"
+import { getProjectById } from "@/lib/repositories/project.repository"
 
 export default function ProjectAdminPromotersPage() {
   const params = useParams()
@@ -80,14 +80,10 @@ export default function ProjectAdminPromotersPage() {
       // Update localStorage with the project ID from URL
       if (typeof window !== 'undefined') {
         localStorage.setItem('selectedProjectId', projectId);
-        
-        // Import the getProjectById function
-        import('@/lib/services/projects').then(({ getProjectById }) => {
-          getProjectById(projectId).then(projectData => {
-            if (projectData) {
-              setCurrentProject(projectData);
-            }
-          });
+        getProjectById(projectId).then(projectData => {
+          if (projectData) {
+            setCurrentProject(projectData);
+          }
         });
       }
     }

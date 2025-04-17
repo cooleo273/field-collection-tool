@@ -32,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/services/client"
+
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

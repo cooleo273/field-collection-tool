@@ -6,20 +6,17 @@ import { NextRequest, NextResponse } from "next/server"
 
 
 const userController = new UserController();
-function generateRandomPassword(length = 12) {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
-  let password = ""
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length)
-    password += charset[randomIndex]
+export async function GET(req: NextRequest, { params }: { params: { count?: boolean } }) {
+  const { count } = params;
+
+  if (count) {
+    return userController.getUserCount(req);
   }
-  return password
+
+  // Handle other GET requests if needed
+  return new Response("Invalid request", { status: 400 });
 }
 
-export async function GET(req: NextRequest, res: NextResponse) {
-    return userController.getAllUsers(req, res);
-
-}
 export async function POST(req: NextRequest, res: NextResponse) {
   return userController.createUser(req, res);
 }

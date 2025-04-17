@@ -48,6 +48,14 @@ export default class ProjectController {
       return this.projectService.deleteProject(id);
     });
   }
+  async getAssignedProjects(req: NextRequest, userId: string) {
+    return this.handleRequest(req, async () => {
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
+      return this.projectService.getAssignedProjects(userId);
+    });
+  }
 
   private async handleRequest(
     req: NextRequest,

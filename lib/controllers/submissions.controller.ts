@@ -51,6 +51,25 @@ export default class SubmissionController {
     });
   }
 
+  async getSubmissionsByProjectId(req: NextRequest, projectId: string) {
+    return this.handleRequest(req, async () => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+
+      return this.submissionService.getSubmissionsByProjectId(projectId);
+    });
+  }
+  async updateSubmission(req: NextRequest, id: string) {
+    return this.handleRequest(req, async () => {
+      if (!id) {
+        throw new Error("Submission ID is required");
+      }
+
+      const body = await req.json();
+      return this.submissionService.updateSubmission(id, body);
+    });
+  }
   private async handleRequest(
     req: NextRequest,
     handler: () => Promise<any>

@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { RefreshCw, CheckCircle, XCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-import { getSubmissions, updateSubmissionStatus } from "@/lib/services/submissions"
+import { getSubmissions, updateSubmission } from "@/lib/repositories/submissions"
+
 
 export default function ProjectAdminSubmissionsPage() {
   const router = useRouter()
@@ -35,7 +36,7 @@ export default function ProjectAdminSubmissionsPage() {
   // Handler to update the status of a submission
   const handleUpdateStatus = async (submissionId: string, status: "approved" | "rejected") => {
     try {
-      await updateSubmissionStatus(submissionId, status)
+      await updateSubmission(submissionId, status)
       await loadSubmissions()
     } catch (error) {
       console.error("Error updating status:", error)

@@ -117,6 +117,53 @@ export default class AdminStatsService {
     }
   }
 
+  async getPromoterAdminDashboardStats(userId: string) {
+    const supabase = getSupabaseClient();
+
+    try {
+      // Get submissions for this promoter
+      const { data: submissions, error: submissionsError } = await supabase
+        .from("submissions")
+        .select(`
+          *,
+          campaigns(name),
+          locations(name)
+        `)
+        .eq("submitted_by", userId)
+        .order("created_at", { ascending: false });
+
+      if (submissionsError) throw submissionsError;
+
+      // Count submissions by status
+      const statusCounts = {
+        draft: 0,
+        submitted: 0,
+        approved: 0,
+        rejected: 0,
+      };
+
+      submissions.forEach((submission: Submission) => {
+        if (submission.status in statusCounts) {
+          statusCounts[submission.status as keyof typeof statusCounts]++;
+        }
+      });
+
+      return {
+        stats: {
+          totalSubmissions: submissions.length,
+          draft: statusCounts.draft,
+          submitted: statusCounts.submitted,
+          approved: statusCounts.approved,
+          rejected: statusCounts.rejected,
+        },
+        recentSubmissions: submissions.slice(0, 5), // Return the 5 most recent submissions
+      };
+    } catch (error) {
+      console.error("Error fetching promoter admin dashboard stats:", error);
+      throw error;
+    }
+  }
+
   // Helper function to calculate submission trends for the last 30 days
   calculateSubmissionTrends(submissions: Submission[]): SubmissionTrend[] {
     const today = new Date();

@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import SubmissionService from "@/lib/services/submissions.service";
+import SubmissionController from "@/lib/controllers/submissions.controller";
 
-const submissionService = new SubmissionService();
+const submissionController = new SubmissionController();
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const submission = await submissionService.getSubmissionById(params.id);
+    const submission = await submissionController.getSubmissionById(req, params.id);
     if (!submission) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
@@ -14,4 +15,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     console.error("Error fetching submission:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
+}
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const { id } = params;
+  return submissionController.updateSubmission(req, id);
 }

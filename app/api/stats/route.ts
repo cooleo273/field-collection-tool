@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
   switch (action) {
     case "getProjectAdminDashboardStats":
       return adminStatsController.getProjectAdminDashboardStats(req, userId, projectId);
+    case "getPromoterDashboardStats":
+      return adminStatsController.getPromoterDashboardStats(req, userId);
     default:
       return NextResponse.json(
         { error: "Invalid action" },

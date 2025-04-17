@@ -16,10 +16,8 @@ import {
 } from "lucide-react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
-import { getLocationCount } from "@/lib/services/locations.service"
-import { getCampaignCount } from "@/lib/services/campaigns.service"
-import { getUserCount } from "@/lib/services/users.service"
-import { getSubmissionCount } from "@/lib/services/submissions"
+import { getLocationCount } from "@/lib/repositories/location.repository"
+
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({

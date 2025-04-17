@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,22 +11,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, LogOut, Settings } from "lucide-react"
-import { useRouter } from "next/navigation"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, LogOut, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function UserNav() {
-  const [isOpen, setIsOpen] = useState(false)
-  const { user, signOut } = useAuth()
-  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const router = useRouter();
 
-  if (!user) return null
+  if (!user) return null;
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push("/login")
-  }
+    await signOut();
+    router.push("/login");
+  };
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -76,6 +76,5 @@ export function UserNav() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
-

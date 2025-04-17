@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { ImagePlus, X, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { uploadImage } from "@/lib/services/storage.service"
+
 import { useToast } from "@/components/ui/use-toast"
+import { uploadImage } from "@/lib/repositories/storage.repository"
 
 interface ImageUploadProps {
   value?: string

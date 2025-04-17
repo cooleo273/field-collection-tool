@@ -4,21 +4,23 @@ import AuthController from "../../../lib/controllers/auth.controller";
 const authController = new AuthController();
 
 export async function POST(req: NextRequest) {
-  const { action, email, password } = await req.json();
+  try {
+    const body = await req.json();
 
-  switch (action) {
-    case "signIn":
-      return authController.signIn(req, email, password);
-    case "signOut":
-      return authController.signOut(req);
-    case "getSession":
-      return authController.getSession(req);
-    case "getCurrentUser":
-      return authController.getCurrentUser(req);
-    default:
+    if (!body || !body.email || !body.password) {
       return NextResponse.json(
-        { error: "Invalid action" },
+        { error: "Email and password are required" },
         { status: 400 }
       );
+    }
+
+    const { email, password } = body;
+    return authController.signIn(req, email, password);
+  } catch (error) {
+    console.error("Error in signIn route:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred during sign-in." },
+      { status: 500 }
+    );
   }
 }

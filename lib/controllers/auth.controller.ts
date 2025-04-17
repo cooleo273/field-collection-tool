@@ -10,7 +10,8 @@ export default class AuthController {
 
   async signIn(req: NextRequest, email: string, password: string) {
     return this.handleRequest(req, async () => {
-      return this.authService.signIn(email, password);
+      const result = await this.authService.signIn(email, password);
+      return result;
     });
   }
   async signOut(req: NextRequest) {
@@ -18,7 +19,7 @@ export default class AuthController {
       return this.authService.signOut();
     });
   }
-    async getSession(req: NextRequest) {
+    async getSession(req: NextRequest){
         return this.handleRequest(req, async () => {
         return this.authService.getSession();
         });

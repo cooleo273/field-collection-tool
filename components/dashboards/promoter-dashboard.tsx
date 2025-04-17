@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button"
 
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
+import { getPromoterDashboardStats } from "@/lib/repositories/stats.repository"
+
 
 export function PromoterDashboard() {
   const router = useRouter()

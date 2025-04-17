@@ -13,7 +13,11 @@ export default class AdminStatsController {
       return this.adminStatsService.getProjectAdminDashboardStats(userId, projectId);
     });
   }
-
+  async getPromoterDashboardStats(req: NextRequest, userId: string) {
+    return this.handleRequest(req, async () => {
+      return this.adminStatsService.getPromoterAdminDashboardStats(userId);
+    });
+  }
   private async handleRequest(
     req: NextRequest,
     handler: () => Promise<any>

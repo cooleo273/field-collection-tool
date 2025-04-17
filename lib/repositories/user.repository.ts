@@ -10,6 +10,19 @@ export async function getAllUsers() {
     throw error;
   }
 }
+export async function getUser(userId: string) {
+  try {
+    const result = await fetch(`/api/users/${userId}`, {
+      method: 'GET',
+    });
+    const response = await result.json();
+    return response;
+  }
+  catch (error) {
+    console.error('Error in getUser:', error);
+    throw error;
+  }
+}
 
 export async function createUser(userData: any) {
   try {

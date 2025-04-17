@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Home,
   Users,
@@ -13,9 +13,9 @@ import {
   LogOut,
   Menu,
   X,
-} from "lucide-react"
-import { useAuth } from "@/contexts/auth-context"
-import { useState } from "react"
+} from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { useState } from "react";
 
 const navItems = [
   {
@@ -43,12 +43,12 @@ const navItems = [
     href: "/settings",
     icon: Settings,
   },
-]
+];
 
 export function SidebarNav() {
-  const pathname = usePathname()
-  const { signOut } = useAuth()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname();
+  const { signOut } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -60,13 +60,20 @@ export function SidebarNav() {
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="mobile-button-icon"
         >
-          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {isMobileMenuOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)} />
+        <div
+          className="mobile-overlay"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
       )}
 
       {/* Mobile Menu */}
@@ -101,8 +108,8 @@ export function SidebarNav() {
               variant="ghost"
               className="w-full justify-start text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
               onClick={() => {
-                signOut()
-                setIsMobileMenuOpen(false)
+                signOut();
+                setIsMobileMenuOpen(false);
               }}
             >
               <LogOut className="h-5 w-5" />
@@ -165,5 +172,5 @@ export function SidebarNav() {
         </div>
       </div>
     </>
-  )
-} 
+  );
+}

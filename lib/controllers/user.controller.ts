@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
 import UserService from '../services/users.service';
 
 export default class UserController {
@@ -17,18 +18,16 @@ export default class UserController {
     }
   }
 
-  async getUserById(req: any, res: any): Promise<void> {
+  async getUserById(id: string): Promise<any> {
     try {
-      const { id } = req.params;
       const user = await this.userService.getUserById(id);
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
+        return { status: 404, json: { error: 'User not found' } };
       }
-      res.status(200).json(user);
+      return { status: 200, json: user };
     } catch (error) {
       console.error('Error fetching user by ID:', error);
-      res.status(500).json({ error: 'Failed to fetch user' });
+      return { status: 500, json: { error: 'Failed to fetch user' } };
     }
   }
 
@@ -142,13 +141,25 @@ export default class UserController {
     }
   }
 
-  async getUserCount(req: any, res: any): Promise<void> {
+  async getUserCount(req: NextRequest) {
+    return this.handleRequest(req, async () => {
+      return this.userService.getUserCount();
+    });
+  }
+
+  private async handleRequest(
+    req: NextRequest,
+    handler: () => Promise<any>
+  ): Promise<NextResponse> {
     try {
-      const count = await this.userService.getUserCount();
-      res.status(200).json({ count });
+      const data = await handler();
+      return NextResponse.json(data);
     } catch (error) {
-      console.error('Error fetching user count:', error);
-      res.status(500).json({ error: 'Failed to fetch user count' });
+      console.error("Error in UserController:", error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "An error occurred" },
+        { status: 500 }
+      );
     }
   }
 }

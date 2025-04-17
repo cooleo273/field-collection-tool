@@ -408,12 +408,6 @@ export default class UserService {
     }
   }
 }
-
-function generateRandomPassword(length: number): string {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-  return Array.from({ length }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
-}
-
 interface PromoterWithProjectData {
   id: string;
   name: string;

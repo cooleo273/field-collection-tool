@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, MapPin } from "lucide-react"
-import { getLocations, deleteLocation, Location } from "@/lib/services/locations.service"
 import { formatDate } from "@/lib/utils"
 import { AddLocationDialog } from "@/components/admin/add-location-dialog"
 import { EditLocationDialog } from "@/components/admin/edit-location-dialog"
@@ -21,7 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Location } from "@/lib/services/locations.service"
 import { LocationMapDialog } from "@/components/admin/location-map-dialog"
+import { deleteLocation, getLocations } from "@/lib/repositories/location.repository"
 
 export default function LocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
@@ -46,9 +47,9 @@ export default function LocationsPage() {
 
       // Create a map of parent locations
       const parentMap: Record<string, string> = {}
-      data.forEach(location => {
+      data.forEach((location: Location) => {
         if (location.parent_id) {
-          const parent = data.find(l => l.id === location.parent_id)
+          const parent = data.find((l: Location) => l.id === location.parent_id)
           if (parent) {
             parentMap[location.id] = parent.name
           }

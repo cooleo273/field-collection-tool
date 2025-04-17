@@ -214,4 +214,25 @@ export default class SubmissionService {
       return [];
     }
   }
+  async getSubmissionsByProjectId(id: string) { 
+    try {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select(
+          "*, users(name, email, role), locations(name, address), campaigns(name, description)"
+        )
+        .eq("project_id", id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching submissions by project ID:", error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error("Error in getSubmissionsByProjectId:", error);
+      return [];
+    }
+  }
 }

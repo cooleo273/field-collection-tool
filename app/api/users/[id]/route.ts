@@ -4,16 +4,12 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
-
 const userController = new UserController();
-function generateRandomPassword(length = 12) {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
-  let password = ""
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length)
-    password += charset[randomIndex]
-  }
-  return password
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const { id } = await params; // Await params to ensure it's resolved
+  const response = await userController.getUserById(id);
+  return new Response(JSON.stringify(response.json), { status: response.status });
 }
 
 export async function PUT(req: NextRequest, res: NextResponse) {
