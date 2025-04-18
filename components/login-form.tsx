@@ -63,7 +63,6 @@ export function LoginForm() {
     setLoginError(null)
 
     try {
-       ("Attempting to sign in...")
       const { error } = await signIn(values.email, values.password)
       
       if (error) {

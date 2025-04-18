@@ -23,15 +23,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Akofada BCC",
   description: "Akofada BCC Data Collection Platform",
-  generator: 'v0.dev',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Akofada BCC'
-  },
-  icons: {
-    icon: '../public/Main_logo.svg',
-    apple: '../public/Main_logo.svg'
   }
 }
 

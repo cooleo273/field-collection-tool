@@ -1,65 +1,112 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  LineChart, 
-  Upload, 
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  LineChart,
+  Upload,
   FileCheck,
-  ClipboardCheck, 
-  FileDown, 
+  ClipboardCheck,
+  FileDown,
   Map,
-  ClipboardList
-} from "lucide-react"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { Button } from "@/components/ui/button"
-// Update imports
+  ClipboardList,
+  LucideIcon
+} from "lucide-react";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { getPromoterDashboardStats } from "@/lib/repositories/stats.repository";
+// Adjust import path
 
-import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
-import { getPromoterDashboardStats } from "@/lib/repositories/stats.repository"
 
+const initialStatsState = {
+  totalSubmissions: 0,
+  submittedSubmissions: 0,
+  approvedSubmissions: 0,
+  rejectedSubmissions: 0,
+};
+
+interface StatCardProps {
+    title: string;
+    icon: LucideIcon;
+    value: number | string;
+    description: string;
+}
+
+function StatCard({ title, icon: Icon, value, description }: StatCardProps) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                <p className="text-xs text-muted-foreground">{description}</p>
+            </CardContent>
+        </Card>
+    );
+}
+
+interface Submission {
+  id: string;
+  status: string;
+  title: string;
+  created_at: string;
+}
 
 export function PromoterDashboard() {
-  const router = useRouter()
-  const { userProfile } = useAuth()
-  const [stats, setStats] = useState({
-    totalSubmissions: 0,
-    submittedSubmissions: 0, // Changed from pendingSubmissions
-    approvedSubmissions: 0,
-    rejectedSubmissions: 0,
-  })
-  const [loading, setLoading] = useState(true)
-  const [recentSubmissions, setRecentSubmissions] = useState<any[]>([])
+  const router = useRouter();
+  const { userProfile } = useAuth();
+
+  const [stats, setStats] = useState(initialStatsState);
+  const [loading, setLoading] = useState(true);
+  const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
+
 
   useEffect(() => {
-    if (!userProfile?.id) return
-    
-    // Store the ID in a local variable to assure TypeScript it's not null
-    const userId = userProfile.id
+    if (!userProfile?.id) {
+      return;
+    }
+
+    const userId = userProfile.id;
 
     async function loadStats() {
       try {
-        setLoading(true)
-        const { stats: dashboardStats, recentSubmissions: recent } = 
-          await getPromoterDashboardStats(userId)
-        
-        setStats(dashboardStats)
-        setRecentSubmissions(recent)
+        setLoading(true);
+        const result = await getPromoterDashboardStats(userId);
+
+        if (result.success && result.data) {
+          setStats(result.data.stats);
+          setRecentSubmissions(result.data.recentSubmissions);
+        } else {
+          console.error("API returned an error:", result.message);
+        }
+
       } catch (error) {
-        console.error("Error loading dashboard stats:", error)
+        console.error("Error loading dashboard stats:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadStats()
-  }, [userProfile])
+    loadStats();
+
+  }, [userProfile]);
 
   if (loading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
+
+  const statsData = [
+      { title: "Total Submissions", icon: ClipboardList, value: stats.totalSubmissions.toLocaleString(), description: "Data forms submitted" },
+      { title: "Submitted", icon: ClipboardCheck, value: (stats as any).Submitted?.toLocaleString() || 0, description: "Awaiting review" },
+      { title: "Approved", icon: FileCheck, value: (stats as any).Approved?.toLocaleString() || 0, description: "Submissions accepted" },
+      { title: "Rejected", icon: FileDown, value: (stats as any).Rejected?.toLocaleString() || 0, description: "Need revisions" },
+  ];
+
 
   return (
     <div className="space-y-6">
@@ -72,54 +119,9 @@ export function PromoterDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSubmissions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Data forms submitted
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Submitted</CardTitle>
-            <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.submittedSubmissions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting review
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <FileCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.approvedSubmissions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Submissions accepted
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <FileDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.rejectedSubmissions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Need revisions
-            </p>
-          </CardContent>
-        </Card>
+        {statsData.map((stat, index) => (
+            <StatCard key={index} {...stat} />
+        ))}
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
@@ -159,7 +161,7 @@ export function PromoterDashboard() {
                         <div className={`w-2 h-2 rounded-full ${getStatusColor(submission.status)}`} />
                         <div className="flex-1 space-y-1">
                           <p className="text-sm font-medium leading-none">
-                            {submission.title || `Submission ${submission.id.slice(0, 8)}`}
+                            {submission.title || `Submission ${submission.id?.slice(0, 8) || ''}`}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(submission.created_at)}
@@ -217,26 +219,35 @@ export function PromoterDashboard() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
-// Helper function to get the right color class based on submission status
-function getStatusColor(status: string) {
+function getStatusColor(status: string | null | undefined): string {
   switch (status) {
     case "approved":
-      return "bg-green-500"
+      return "bg-green-500";
     case "rejected":
-      return "bg-red-500"
-    case "pending":
-      return "bg-yellow-500"
+      return "bg-red-500";
+    case "submitted":
+      return "bg-yellow-500";
+    case "draft":
+      return "bg-gray-500";
     default:
-      return "bg-blue-500"
+      return "bg-blue-500";
   }
 }
 
-// Helper function to format dates
-function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+function formatDate(dateString: string | null | undefined): string {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string provided to formatDate:", dateString);
+      return dateString;
+    }
+    return date.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch (e) {
+    console.error("Error formatting date:", dateString, e);
+    return dateString;
+  }
 }
-
