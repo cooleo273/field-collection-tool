@@ -43,6 +43,7 @@ export default class UserService {
     }
   }
 
+
   async getUserById(id: string): Promise<User | null> {
     try {
       const { data, error } = await supabase.from("users").select("*").eq("id", id).single();
@@ -295,16 +296,17 @@ export default class UserService {
   }
 
   async getUserCount(): Promise<number> {
-    try {
-      const { count, error } = await supabase.from("users").select("*", { count: "exact", head: true });
-      if (error) throw error;
-      return count || 0;
-    } catch (error) {
-      console.error("Error getting user count:", error);
-      return 0;
-    }
-  }
+    const { count, error } = await supabase
+      .from("users")
+      .select("*", { count: "exact", head: true });
 
+    if (error) {
+      console.error("Service Error:", error);
+      throw error;
+    }
+
+    return count ?? 0;
+  }
   async resetUserPassword(id: string): Promise<string> {
     try {
       const response = await fetch(`/api/users/${id}/reset-password`, { method: "POST" });

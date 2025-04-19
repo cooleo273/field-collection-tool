@@ -60,6 +60,17 @@ export default class SubmissionController {
       return this.submissionService.getSubmissionsByProjectId(projectId);
     });
   }
+
+  async getSubmissionCount(_req: NextRequest): Promise<NextResponse> {
+    try {
+      const count = await this.submissionService.getSubmissionCount();
+      return NextResponse.json({ count });
+    } catch (error) {
+      console.error("Controller Error:", error);
+      return NextResponse.json({ error: "Failed to get user count" }, { status: 500 });
+    }
+  }
+  
   async updateSubmission(req: NextRequest, id: string) {
     return this.handleRequest(req, async () => {
       if (!id) {

@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2, UserCog } from "lucide-react"
-import { getUsersByRole, deleteUser } from "@/lib/services/users.service"
 import { formatDate } from "@/lib/utils"
 import { AddProjectAdminDialog } from "@/components/admin/add-project-admin-dialog"
 import { EditProjectAdminDialog } from "@/components/admin/edit-project-admin-dialog"
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { AssignProjectsDialog } from "@/components/admin/assign-projects-dialog"
 import { Map } from "lucide-react"
+import { deleteUser } from "@/lib/repositories/user.repository"
 
 
 export default function ProjectAdminsPage() {

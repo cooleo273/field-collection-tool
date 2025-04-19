@@ -38,17 +38,22 @@ export default class CampaignController {
     });
   }
 
-  async getCampaignCount(req: NextRequest) {
-    return this.handleRequest(req, async () => {
-      return this.campaignService.getCampaignCount();
-    });
-  }
-
   async getAssignedCampaigns(req: NextRequest, userId: string) {
     return this.handleRequest(req, async () => {
       return this.campaignService.getAssignedCampaigns(userId);
     });
   }
+
+  async getCampaignCount(_req: NextRequest): Promise<NextResponse> {
+    try {
+      const count = await this.campaignService.getCampaignCount();
+      return NextResponse.json({ count });
+    } catch (error) {
+      console.error("Controller Error:", error);
+      return NextResponse.json({ error: "Failed to get user count" }, { status: 500 });
+    }
+  }
+
 
   private async handleRequest(
     req: NextRequest,

@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { getUserCount } from "@/lib/services/users.service"
-import { getSubmissionCount, getRecentSubmissions } from "@/lib/services/submissions"
-import { getCampaignCount } from "@/lib/services/campaigns.service"
-import { getLocationCount } from "@/lib/services/locations.service"
-import { Users, Map, ClipboardList, Calendar } from "lucide-react"
+import { Users, ClipboardList, Calendar } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { fetchUserCount } from "@/lib/repositories/user.repository"
+import { fetchCampaignCount } from "@/lib/repositories/campaign.repository"
+import { fetchSubmissionCount } from "@/lib/repositories/submissions"
+import { getRecentSubmissions } from "@/lib/repositories/submission.repository"
 
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
@@ -16,7 +16,7 @@ export default function AdminDashboardPage() {
     userCount: 0,
     submissionCount: 0,
     campaignCount: 0,
-    locationCount: 0,
+    
   })
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([])
 
@@ -26,37 +26,31 @@ export default function AdminDashboardPage() {
         setLoading(true)
 
         // Fetch all stats in parallel with error handling
-        const userCountPromise = getUserCount().catch((err) => {
+        const userCountPromise = fetchUserCount().catch((err) => {
           console.error("Error fetching user count:", err)
           return 0
         })
 
-        const submissionCountPromise = getSubmissionCount().catch((err) => {
+        const submissionCountPromise = fetchSubmissionCount().catch((err) => {
           console.error("Error fetching submission count:", err)
           return 0
         })
 
-        const campaignCountPromise = getCampaignCount().catch((err) => {
+        const campaignCountPromise = fetchCampaignCount().catch((err) => {
           console.error("Error fetching campaign count:", err)
           return 0
         })
-
-        const locationCountPromise = getLocationCount().catch((err) => {
-          console.error("Error fetching location count:", err)
-          return 0
-        })
-
+    
         const submissionsPromise = getRecentSubmissions(5).catch((err) => {
           console.error("Error fetching recent submissions:", err)
           return []
         })
 
         // Wait for all promises to resolve
-        const [userCount, submissionCount, campaignCount, locationCount, submissions] = await Promise.all([
+        const [userCount, submissionCount, campaignCount, submissions] = await Promise.all([
           userCountPromise,
           submissionCountPromise,
           campaignCountPromise,
-          locationCountPromise,
           submissionsPromise,
         ])
 
@@ -64,7 +58,6 @@ export default function AdminDashboardPage() {
           userCount,
           submissionCount,
           campaignCount,
-          locationCount,
         })
 
         setRecentSubmissions(submissions)
@@ -118,17 +111,6 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.campaignCount}</div>
             <p className="text-xs text-muted-foreground">Active and completed</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Locations</CardTitle>
-            <Map className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.locationCount}</div>
-            <p className="text-xs text-muted-foreground">Registered locations</p>
           </CardContent>
         </Card>
       </div>

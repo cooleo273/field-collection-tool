@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Plus, Pencil, Trash2 } from "lucide-react"
-import { getUsers, deleteUser } from "@/lib/services/users.service"
+
 import { formatDate } from "@/lib/utils"
 import { AddUserDialog } from "@/components/admin/add-user-dialog"
 import { EditUserDialog } from "@/components/admin/edit-user-dialog"
@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { deleteUser, getAllUsers } from "@/lib/repositories/user.repository"
 
 export default function UsersPage() {
   const { toast } = useToast()
@@ -39,7 +40,7 @@ export default function UsersPage() {
   const loadUsers = async () => {
     setLoading(true)
     try {
-      const data = await getUsers()
+      const data = await getAllUsers()
       setUsers(data)
     } catch (error) {
       console.error("Error loading users:", error)

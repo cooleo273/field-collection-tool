@@ -8,14 +8,10 @@ export default class UserController {
     this.userService = new UserService();
   }
 
-  async getAllUsers(req: any, res: any): Promise<void> {
-    try {
-      const users = await this.userService.getUsers();
-      res.status(200).json(users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
-    }
+  async getAllUsers(req: NextRequest) {
+    return this.handleRequest(req, async () => {
+      return this.userService.getUsers();
+    });
   }
 
   async getUserById(id: string): Promise<any> {
@@ -141,10 +137,14 @@ export default class UserController {
     }
   }
 
-  async getUserCount(req: NextRequest) {
-    return this.handleRequest(req, async () => {
-      return this.userService.getUserCount();
-    });
+  async getUserCount(_req: NextRequest): Promise<NextResponse> {
+    try {
+      const count = await this.userService.getUserCount();
+      return NextResponse.json({ count });
+    } catch (error) {
+      console.error("Controller Error:", error);
+      return NextResponse.json({ error: "Failed to get user count" }, { status: 500 });
+    }
   }
 
   private async handleRequest(

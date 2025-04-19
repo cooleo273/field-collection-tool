@@ -199,7 +199,7 @@ export default class SubmissionService {
     try {
       const { data, error } = await supabase
         .from("submissions")
-        .select("*, users(name, email, role), locations(name), campaigns(name)")
+        .select("*, users!submissions_reviewed_by_fkey(name, email, role)")
         .order("created_at", { ascending: false })
         .limit(limit);
 
