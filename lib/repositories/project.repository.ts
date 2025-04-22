@@ -83,3 +83,33 @@ export async function getAssignedProjects(userId: string) {
     throw error;
   }
 }
+
+export async function getAdminProjects(adminId: string) {
+  try {
+    const result = await fetch(`/api/project/admin/${adminId}`, {
+      method: 'GET',
+    });
+    const response = await result.json();
+    return response;
+  } catch (error) {
+    console.error('Error in getAdminProjects:', error);
+    throw error;
+  }
+}
+
+export async function assignProjectsToAdmin(adminId: string, projectIds: string[]) {
+  try {
+    const result = await fetch(`/api/project/admin/${adminId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ projectIds }),
+    });
+    const response = await result.json();
+    return response;
+  } catch (error) {
+    console.error('Error in assignProjectsToAdmin:', error);
+    throw error;
+  }
+}

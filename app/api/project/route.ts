@@ -25,3 +25,5 @@ export async function DELETE(
   const { id } = await params; // Extract the ID from the request parameters
   return projectController.deleteProject(req, id); // Pass the ID to the controller method
 }
+
+// Removed duplicate GET and POST functions for admin-related operations as they are now in a separate file.

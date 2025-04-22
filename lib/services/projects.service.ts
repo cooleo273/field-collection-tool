@@ -31,16 +31,17 @@ export default class ProjectService {
           updated_at
         )
       `)
-      .eq('user_id', adminId)
+      .eq('user_id', adminId);
 
     if (error) {
-      console.error('Error fetching project:', error)
-      return null
+      console.error('Error fetching projects for admin:', error);
+      return [];
     }
 
-    // Return the first project if exists
-    return data && data.length > 0 ? data[0].projects : null
+    // Return all projects instead of just the first one
+    return data ? data.map((entry) => entry.projects) : [];
   }
+
   async createProjects(projects: Omit<Project, "id" | "created_at" | "updated_at">): Promise<Project> {
     try {
       const { data, error } = await supabase
@@ -177,6 +178,29 @@ async getAssignedProjects(userId: string): Promise<AssignedProject[]> {
   } catch (error) {
     console.error("Error loading assigned projects:", error);
     return [];
+  }
+}
+
+async assignProjectsToAdmin(adminId: string, projectIds: string[]): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("project_admins")
+      .insert(
+        projectIds.map((projectId) => ({
+          user_id: adminId,
+          project_id: projectId,
+        }))
+      );
+
+    if (error) {
+      console.error("Supabase error assigning projects to admin:", error);
+      throw new Error(`Failed to assign projects to admin: ${error.message}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in assignProjectsToAdmin:", error);
+    throw error;
   }
 }
 }

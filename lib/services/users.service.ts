@@ -187,9 +187,9 @@ export default class UserService {
         .from("users")
         .select("*")
         .eq("role", role)
-        .order("created_at", { ascending: false })
-      
-      if (role === 'project-admin') {
+        .order("created_at", { ascending: false });
+
+      if (role === "project-admin") {
         query = supabase
           .from("users")
           .select(`
@@ -200,8 +200,8 @@ export default class UserService {
             )
           `)
           .eq("role", role)
-          .order("created_at", { ascending: false })
-      } else if (role === 'promoter') {
+          .order("created_at", { ascending: false });
+      } else if (role === "promoter") {
         query = supabase
           .from("users")
           .select(`
@@ -216,53 +216,56 @@ export default class UserService {
             )
           `)
           .eq("role", role)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
       }
-  
-      const { data, error } = await query
-      
-      if (error) throw error
-      
-      let processedData = data
-      
-      if (role === 'project-admin') {
-        processedData = data.map(user => ({
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      let processedData = data;
+
+      if (role === "project-admin") {
+        processedData = data.map((user) => ({
           ...user,
-          assigned_projects: user.project_admins?.map((pa: any) => ({
-            project_id: pa.project_id,
-            project_name: pa.projects?.name,
-            project_status: pa.projects?.status
-          })) || []
-        }))
-      } else if (role === 'promoter') {
-        processedData = data.map(user => {
-          const projectLocations: Record<string, string[]> = {}
-          
+          assigned_projects:
+            user.project_admins?.map((pa: any) => ({
+              project_id: pa.project_id,
+              project_name: pa.projects?.name,
+              project_status: pa.projects?.status,
+            })) || [],
+        }));
+      } else if (role === "promoter") {
+        processedData = data.map((user) => {
+          const projectLocations: Record<string, string[]> = {};
+
           if (user.project_promoter_locations) {
             user.project_promoter_locations.forEach((ppl: any) => {
               if (!projectLocations[ppl.project_id]) {
-                projectLocations[ppl.project_id] = []
+                projectLocations[ppl.project_id] = [];
               }
-              projectLocations[ppl.project_id].push(ppl.location_id)
-            })
+              projectLocations[ppl.project_id].push(ppl.location_id);
+            });
           }
-          
+
           return {
             ...user,
-            assigned_projects: user.project_promoters?.map((pp: any) => ({
-              project_id: pp.project_id,
-              project_name: pp.projects?.name,
-              assigned_locations: projectLocations[pp.project_id] || []
-            })) || [],
-            assignedLocations: user.project_promoter_locations?.map((ppl: any) => ppl.location_id) || []
-          }
-        })
+            assigned_projects:
+              user.project_promoters?.map((pp: any) => ({
+                project_id: pp.project_id,
+                project_name: pp.projects?.name,
+                assigned_locations: projectLocations[pp.project_id] || [],
+              })) || [],
+            assignedLocations:
+              user.project_promoter_locations?.map((ppl: any) => ppl.location_id) || [],
+          };
+        });
       }
-      
-      return processedData
+
+      return processedData;
     } catch (error) {
-      console.error(`Error getting users by role ${role}:`, error)
-      throw error
+      console.error(`Error getting users by role ${role}:`, error);
+      throw error;
     }
   }
 

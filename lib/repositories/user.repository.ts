@@ -41,6 +41,23 @@ export async function createUser(userData: any) {
   }
 }
 
+export async function createUserWithAuth(userData: any) {
+  try {
+    const result = await fetch('/api/users?withAuth=true', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    const response = await result.json();
+    return response;
+  } catch (error) {
+    console.error('Error in createUserWithAuth:', error);
+    throw error;
+  }
+}
+
 export async function updateUser(userId: string, userData: any) {
   try {
     const result = await fetch(`/api/users/${userId}`, {
@@ -124,4 +141,16 @@ export const fetchUserCount = async (): Promise<number> => {
   if (!res.ok) throw new Error("Failed to fetch user count");
   const { count } = await res.json();
   return count;
+};
+
+export const getUsersByRole = async (role: string): Promise<any[]> => {
+  const res = await fetch(`/api/users/byrole?role=${role}`);
+  if (!res.ok) throw new Error("Failed to fetch users by role");
+  const response = await res.json();
+
+  // Log the response for debugging purposes
+  console.log("Response from /api/users/byrole:", response);
+
+  // Ensure the response is always an array
+  return Array.isArray(response) ? response : [response];
 };

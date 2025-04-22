@@ -22,7 +22,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createUserWithAuth } from "@/lib/services/users.service"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Copy } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -30,6 +29,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
 import { useEffect } from "react"
 import { supabase } from "@/lib/services/client"
+import { createUserWithAuth } from "@/lib/repositories/user.repository"
+import { getProjects } from "@/lib/repositories/project.repository"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -72,28 +73,25 @@ export function AddProjectAdminDialog({
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false })
+        const response = await getProjects();
+        const { data, error } = response;
+        if (error) throw error;
 
-        if (error) throw error
-
-        setProjects(data || [])
+        setProjects(data || []);
       } catch (error) {
-        console.error('Error fetching projects:', error)
+        console.error('Error fetching projects:', error);
         toast({
           title: "Error",
           description: "Failed to load projects",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
     if (open) {
-      fetchProjects()
+      fetchProjects();
     }
   }, [open])
 

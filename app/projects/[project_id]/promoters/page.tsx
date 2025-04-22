@@ -25,6 +25,7 @@ import { useParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { useProject } from "@/contexts/project-context"
 import { getProjectById } from "@/lib/repositories/project.repository"
+import { getProjectPromoters } from "@/lib/repositories/promoter.repository"
 
 export default function ProjectAdminPromotersPage() {
   const params = useParams()

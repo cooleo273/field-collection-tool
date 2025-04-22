@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { RefreshCw, CheckCircle, XCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-import { getSubmissions, updateSubmission } from "@/lib/repositories/submissions"
+import { getAllSubmissions, updateSubmission } from "@/lib/repositories/submissions"
 
 
 export default function ProjectAdminSubmissionsPage() {
@@ -24,7 +24,7 @@ export default function ProjectAdminSubmissionsPage() {
   const loadSubmissions = async () => {
     setLoading(true)
     try {
-      const data = await getSubmissions()
+      const data = await getAllSubmissions()
       setSubmissions(data)
     } catch (error) {
       console.error("Error loading submissions:", error)

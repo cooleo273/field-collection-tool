@@ -14,7 +14,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { createUserWithAuth } from "@/lib/services/users.service"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -24,6 +23,7 @@ import {
   AlertTitle 
 } from "@/components/ui/alert"
 import { Copy } from "lucide-react"
+import { createUserWithAuth } from "@/lib/repositories/user.repository"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

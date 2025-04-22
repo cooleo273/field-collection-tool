@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import UserService from '../services/users.service';
+import UserService from "@/lib/services/users.service";
+import { NextApiResponse } from "next";
 
 export default class UserController {
   private userService: UserService;
@@ -38,6 +39,17 @@ export default class UserController {
     }
   }
 
+  async createUserWithAuth(req: any, res: any): Promise<void> {
+    try {
+      const userData = req.body;
+      const userWithAuth = await this.userService.createUserWithAuth(userData);
+      res.status(201).json(userWithAuth);
+    } catch (error) {
+      console.error('Error creating user with auth:', error);
+      res.status(500).json({ error: 'Failed to create user with auth' });
+    }
+  }
+
   async updateUser(req: any, res: any): Promise<void> {
     try {
       const { id } = req.params;
@@ -69,15 +81,8 @@ export default class UserController {
     }
   }
 
-  async getUsersByRole(req: any, res: any): Promise<void> {
-    try {
-      const { role } = req.params;
-      const users = await this.userService.getUsersByRole(role);
-      res.status(200).json(users);
-    } catch (error) {
-      console.error('Error fetching users by role:', error);
-      res.status(500).json({ error: 'Failed to fetch users by role' });
-    }
+  async getUsersByRole(role: string) {
+      return this.userService.getUsersByRole(role);
   }
 
   async resetUserPassword(req: any, res: any): Promise<void> {

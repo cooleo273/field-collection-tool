@@ -8,6 +8,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest, res: NextResponse) {
+  const { searchParams } = req.nextUrl;
+  const withAuth = searchParams.get("withAuth") === "true";
+
+  if (withAuth) {
+    return userController.createUserWithAuth(req, res);
+  }
+
   return userController.createUser(req, res);
 }
 

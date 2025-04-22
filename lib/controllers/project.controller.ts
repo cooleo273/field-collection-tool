@@ -57,6 +57,29 @@ export default class ProjectController {
     });
   }
 
+  async getAdminProjects(req: NextRequest, adminId: string) {
+    return this.handleRequest(req, async () => {
+      if (!adminId) {
+        throw new Error("Admin ID is required");
+      }
+      return this.projectService.getProjectByAdmin(adminId);
+    });
+  }
+
+  async assignProjectsToAdmin(req: NextRequest, adminId: string) {
+    return this.handleRequest(req, async () => {
+      if (!adminId) {
+        throw new Error("Admin ID is required");
+      }
+      const body = await req.json();
+      const { projectIds } = body;
+      if (!Array.isArray(projectIds) || projectIds.length === 0) {
+        throw new Error("Project IDs are required");
+      }
+      return this.projectService.assignProjectsToAdmin(adminId, projectIds);
+    });
+  }
+
   private async handleRequest(
     req: NextRequest,
     handler: () => Promise<any>

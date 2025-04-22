@@ -30,8 +30,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon, Plus } from "lucide-react"
-import { createCampaign } from "@/lib/services/campaigns.service"
 import { useToast } from "@/components/ui/use-toast"
+import { createCampaign } from "@/lib/repositories/campaign.repository"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -78,8 +78,6 @@ export function AddCampaignDialog({ open, onOpenChange, onSuccess }: AddCampaign
         end_date: data.end_date.toISOString(),
         status: "draft" as const,
       }
-
-       ("Creating campaign with data:", campaignData)
       
       await createCampaign(campaignData)
       

@@ -14,8 +14,8 @@ import {
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
-import { getProjects } from "@/lib/services/projects"
-import { assignProjectsToAdmin, getAdminProjects } from "@/lib/services/users.service"
+import {getProjects, getAdminProjects, assignProjectsToAdmin} from "@/lib/repositories/project.repository"
+
 
 interface AssignProjectsDialogProps {
   admin: any
@@ -51,7 +51,13 @@ export function AssignProjectsDialog({
 
       // Load admin's assigned projects
       const adminProjects = await getAdminProjects(admin.id)
-      setSelectedProjects(adminProjects.map((p: any) => p.project_id))
+      if (Array.isArray(adminProjects)) {
+        const adminProjectIds = adminProjects.map((p: any) => p.project_id || p.id)
+        setSelectedProjects(adminProjectIds)
+      } else {
+        console.error("Unexpected response format for adminProjects:", adminProjects)
+        setSelectedProjects([])
+      }
     } catch (error) {
       console.error("Error loading data:", error)
       toast({

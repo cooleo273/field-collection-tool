@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSubmissionsBySubmissionId } from "@/lib/repositories/submissions";
+import { getSubmissionsBySubmissionId } from "@/lib/repositories/submission.repository";
 import { useRouter } from "next/router";
 
 export default function ProjectSubmissionsPage() {

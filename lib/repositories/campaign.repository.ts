@@ -4,4 +4,3 @@ export const fetchCampaignCount = async (): Promise<number> => {
     const { count } = await res.json();
     return count;
   };
-  
