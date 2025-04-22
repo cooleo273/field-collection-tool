@@ -154,3 +154,11 @@ export const getUsersByRole = async (role: string): Promise<any[]> => {
   // Ensure the response is always an array
   return Array.isArray(response) ? response : [response];
 };
+
+export const getUsersByEmail = async (email: string): Promise<any[]> => {
+  const res = await fetch(`/api/users/email?email=${email}`);
+  if (!res.ok) throw new Error("Failed to fetch users by role");
+  const response = await res.json();
+  // Ensure the response is always an array
+  return response;
+};

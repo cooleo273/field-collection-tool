@@ -26,7 +26,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useProject } from "@/contexts/project-context"
 import { getProjectById } from "@/lib/repositories/project.repository"
 import { getProjectPromoters } from "@/lib/repositories/promoter.repository"
-
+import { deleteUser } from "@/lib/repositories/user.repository"
 export default function ProjectAdminPromotersPage() {
   const params = useParams()
   const projectId = params.project_id as string

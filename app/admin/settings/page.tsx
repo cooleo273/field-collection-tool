@@ -13,6 +13,7 @@ import type { User } from "@/lib/services/users.service"
 import { Save } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { getUsersByEmail } from "@/lib/repositories/user.repository"
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -44,29 +45,30 @@ export default function SettingsPage() {
       }
 
       // Get user details from database
-      const userData = await getUserByEmail(session.user.email)
-      
-      if (!userData) {
+      const userData = await getUsersByEmail(session.user.email);
+
+      if (!Array.isArray(userData) || userData.length === 0) {
         toast({
           title: "User Not Found",
           description: "Your account information could not be found.",
           variant: "destructive",
-        })
-        router.push("/login")
-        return
+        });
+        router.push("/login");
+        return;
       }
 
-      setUser(userData)
+      const user = userData[0]; // Select the first user from the array
+      setUser(user);
 
       // Check if user has admin role
-      if (userData.role !== "admin") {
+      if (user.role !== "admin") {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this page.",
           variant: "destructive",
-        })
-        router.push("/dashboard")
-        return
+        });
+        router.push("/dashboard");
+        return;
       }
     } catch (error) {
       console.error("Error checking user role:", error)
@@ -83,7 +85,6 @@ export default function SettingsPage() {
 
   const handleSaveChanges = async () => {
     try {
-      // TODO: Implement save settings functionality
       toast({
         title: "Success",
         description: "Settings saved successfully.",

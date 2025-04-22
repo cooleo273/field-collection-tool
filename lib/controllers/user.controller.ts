@@ -27,7 +27,6 @@ export default class UserController {
       return { status: 500, json: { error: 'Failed to fetch user' } };
     }
   }
-
   async createUser(req: any, res: any): Promise<void> {
     try {
       const userData = req.body;
@@ -166,5 +165,20 @@ export default class UserController {
         { status: 500 }
       );
     }
+  }
+}
+
+const userService = new UserService();
+
+export async function getUserByEmailController(email: string) {
+  try {
+    const user = await userService.getUserByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (error) {
+    console.error("Controller Error in getUserByEmailController:", error);
+    throw error;
   }
 }
