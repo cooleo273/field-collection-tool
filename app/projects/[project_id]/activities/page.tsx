@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSubmissionsBySubmissionId } from "@/lib/repositories/submission.repository";
+import { fetchSubmissionsByProjectId } from "@/lib/repositories/submission.repository";
 import { useRouter } from "next/router";
 
 export default function ProjectSubmissionsPage() {
@@ -17,7 +17,7 @@ export default function ProjectSubmissionsPage() {
   const loadSubmissions = async (projectId: string) => {
     setLoading(true);
     try {
-      const data = await getSubmissionsBySubmissionId(projectId);
+      const data = await fetchSubmissionsByProjectId(projectId);
       setSubmissions(data);
     } catch (error) {
       console.error("Error loading submissions:", error);

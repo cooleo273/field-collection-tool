@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
-import { updateUser } from "@/lib/services/users.service"
 import { supabase } from "@/lib/services/client"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { updateUser } from "@/lib/repositories/user.repository"
 
 interface AssignLocationsDialogProps {
   open: boolean

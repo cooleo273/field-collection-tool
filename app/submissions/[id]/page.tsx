@@ -15,7 +15,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getSubmissionPhotosById, getSubmissionPhotosStorage, getSubmissionsBySubmissionId } from "@/lib/repositories/submissions"
+import { getSubmissionPhotosById} from "@/lib/repositories/submissions"
 import { getPublicUrl } from "@/lib/repositories/storage.repository"
 import { supabase } from "@/lib/services/client"
 

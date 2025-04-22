@@ -388,13 +388,13 @@ export default class UserService {
             location_id
           )
         `)
-        .eq('project_id', projectId)
-    
+        .eq('project_id', projectId);
+
       if (error) {
-        console.error("Error fetching project promoters:", error)
-        throw error
+        console.error("Error fetching project promoters:", error);
+        throw error;
       }
-    
+
       return data?.map(item => {
         const user = Array.isArray(item.users) ? (item.users[0] as User) : (item.users as User);
         return {
@@ -405,11 +405,11 @@ export default class UserService {
           status: user.status,
           assignedLocations: item.project_promoter_locations || [],
           submissions: []
-        }
-      }) || []
+        };
+      }) || [];
     } catch (error) {
-      console.error("Error in getProjectPromoters:", error)
-      throw error
+      console.error("Error in getProjectPromoters:", error);
+      throw error;
     }
   }
 }

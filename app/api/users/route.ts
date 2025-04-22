@@ -4,7 +4,15 @@ import { NextRequest, NextResponse } from "next/server"
 
 const userController = new UserController();
 export async function GET(req: NextRequest) {
- return userController.getAllUsers(req);
+  const { searchParams } = req.nextUrl;
+  const projectId = searchParams.get("projectId");
+  const adminId = searchParams.get("adminId");
+
+  if (projectId && adminId) {
+    return userController.getProjectPromoters(projectId, adminId);
+  }
+
+  return userController.getAllUsers(req);
 }
 
 export async function POST(req: NextRequest, res: NextResponse) {

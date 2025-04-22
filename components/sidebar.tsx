@@ -6,13 +6,8 @@ import { cn } from "@/lib/utils";
 import {
   Users,
   Map,
-  Settings,
   ClipboardList,
   Upload,
-  CheckSquare,
-  UserCog,
-  UserPlus,
-  FileInput,
   PieChart,
   Calendar,
   LayoutDashboard,

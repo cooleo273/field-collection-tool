@@ -16,24 +16,16 @@ import {
 } from "@/components/ui/dialog"
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { getCampaigns } from "@/lib/repositories/campaign.repository"
-import { getAdminCampaigns, assignCampaignsToAdmin } from "@/lib/repositories/campaign.repository"
 import { CheckedState } from "@radix-ui/react-checkbox"
+import { Campaign } from "@/lib/services/campaigns.service"
+import { fetchAllCampaigns, fetchCampaignById } from "@/lib/repositories/campaign.repository"
 
 const formSchema = z.object({
   campaignIds: z.array(z.string()),
@@ -78,11 +70,11 @@ export function AssignCampaignsDialog({
     setLoading(true)
     try {
       // Load all campaigns
-      const campaignsData = await getCampaigns()
+      const campaignsData = await fetchAllCampaigns()
       setCampaigns(campaignsData)
 
       // Load admin's assigned campaigns
-      const adminCampaigns = await getAdminCampaigns(admin.id)
+      const adminCampaigns = await fetchCampaignById(admin.id)
       const assignedIds = adminCampaigns.map(ac => ac.campaign_id)
       setAssignedCampaignIds(assignedIds)
       

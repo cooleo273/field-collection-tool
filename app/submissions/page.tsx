@@ -6,10 +6,10 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { getSupabaseClient } from "@/lib/services/client"
 import { useAuth } from "@/contexts/auth-context"
 import { Eye, Edit, Upload, Filter } from "lucide-react"
 import { format } from "date-fns"
+import { fetchSubmissionsByUserId } from "@/lib/repositories/submission.repository"
 
 // Updated interface to match the database schema
 interface Submission {
@@ -37,7 +37,6 @@ export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { userProfile } = useAuth()
-  const supabase = getSupabaseClient()
 
   useEffect(() => {
     if (!userProfile) return
@@ -45,15 +44,8 @@ export default function SubmissionsPage() {
     const fetchSubmissions = async () => {
       try {
         // Updated query to match the schema and include related data
-        const { data, error } = await supabase
-          .from("submissions")
-          .select(`
-            *
-          `)
-          .eq("submitted_by", userProfile.id)
-          .order("created_at", { ascending: false })
+        const data = await fetchSubmissionsByUserId(userProfile.id)
 
-        if (error) throw error
 
         setSubmissions(data || [])
       } catch (error) {
@@ -65,35 +57,8 @@ export default function SubmissionsPage() {
 
     fetchSubmissions()
 
-    // Set up real-time subscription with corrected field name
-    const subscription = supabase
-      .channel("submissions_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "submissions",
-          filter: `submitted_by=eq.${userProfile.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setSubmissions((prev) => [payload.new as Submission, ...prev])
-          } else if (payload.eventType === "UPDATE") {
-            setSubmissions((prev) =>
-              prev.map((submission) => (submission.id === payload.new.id ? (payload.new as Submission) : submission)),
-            )
-          } else if (payload.eventType === "DELETE") {
-            setSubmissions((prev) => prev.filter((submission) => submission.id !== payload.old.id))
-          }
-        },
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(subscription)
-    }
-  }, [userProfile, supabase])
+  
+  }, [userProfile])
 
   const getStatusBadgeClass = (status: string) => {
     switch (status.toLowerCase()) {

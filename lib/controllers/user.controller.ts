@@ -119,14 +119,12 @@ export default class UserController {
     }
   }
 
-  async getProjectPromoters(req: any, res: any): Promise<void> {
+  async getProjectPromoters(projectId: string, adminId: string) {
     try {
-      const { projectId, adminId } = req.params;
-      const promoters = await this.userService.getProjectPromoters(projectId, adminId);
-      res.status(200).json(promoters);
+      return await this.userService.getProjectPromoters(projectId, adminId);
     } catch (error) {
       console.error('Error fetching project promoters:', error);
-      res.status(500).json({ error: 'Failed to fetch project promoters' });
+      throw error;
     }
   }
 

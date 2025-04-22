@@ -23,13 +23,13 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createUserWithAuth } from "@/lib/services/users.service"
 import { 
   Alert,
   AlertDescription,
   AlertTitle 
 } from "@/components/ui/alert"
 import { Copy } from "lucide-react"
+import { createUserWithAuth } from "@/lib/repositories/user.repository"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

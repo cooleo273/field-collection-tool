@@ -35,6 +35,7 @@ import { supabase } from "@/lib/services/client";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import Image from "next/image";
 import { X } from "lucide-react"; // Add this import
+import { getSubmissionById, updateSubmission } from "@/lib/repositories/submissions";
 
 
 const COMMUNITY_GROUPS = [

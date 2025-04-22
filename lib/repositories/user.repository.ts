@@ -162,3 +162,20 @@ export const getUsersByEmail = async (email: string): Promise<any[]> => {
   // Ensure the response is always an array
   return response;
 };
+
+
+export const getProjectPromoters = async (projectId: string, adminId: string) => {
+  try {
+    const response = await fetch(
+      `/api/users/getProjectPromoters?projectId=${projectId}&adminId=${adminId}`
+    );
+    const responseData = await response.json();
+    if (!response.ok) {
+      throw new Error("Failed to fetch project promoters");
+    }
+    return responseData;
+  } catch (error) {
+    console.error("Error fetching project promoters from API:", error);
+    throw error;
+  }
+}

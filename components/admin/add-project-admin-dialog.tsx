@@ -28,7 +28,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
 import { useEffect } from "react"
-import { supabase } from "@/lib/services/client"
 import { createUserWithAuth } from "@/lib/repositories/user.repository"
 import { getProjects } from "@/lib/repositories/project.repository"
 

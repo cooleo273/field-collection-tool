@@ -30,7 +30,7 @@ import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { updateCampaign } from "@/lib/repositories/campaign.repository"
-import { Campaign } from "@/lib/repositories/campaign.repository"
+import { Campaign } from "@/lib/services/campaigns.service"
 
 const formSchema = z.object({
   name: z.string().min(2, {

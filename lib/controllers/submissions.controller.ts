@@ -51,16 +51,6 @@ export default class SubmissionController {
     });
   }
 
-  async getSubmissionsByProjectId(req: NextRequest, projectId: string) {
-    return this.handleRequest(req, async () => {
-      if (!projectId) {
-        throw new Error("Project ID is required");
-      }
-
-      return this.submissionService.getSubmissionsByProjectId(projectId);
-    });
-  }
-
   async getSubmissionCount(_req: NextRequest): Promise<NextResponse> {
     try {
       const count = await this.submissionService.getSubmissionCount();
@@ -80,6 +70,31 @@ export default class SubmissionController {
       const body = await req.json();
       return this.submissionService.updateSubmission(id, body);
     });
+  }
+  async getSubmissionsByProjectId(projectId: string) {
+    try {
+      const submissions = await this.submissionService.getSubmissionsByProjectId(projectId);
+      if (!submissions || submissions.length === 0) {
+        throw new Error("No submissions found for the given project ID");
+      }
+      return { status: 200, json: submissions };
+    } catch (error) {
+      console.error("Error fetching submissions by project ID:", error);
+      return { status: 500, json: { error: "Failed to fetch submissions by project ID" } };
+    }
+  }
+  async getSubmissionsByUserId(userId: string) {
+    try {
+      const submissions = await this.submissionService.getSubmissionsByUserId(userId);
+      if (!submissions || submissions.length === 0) {
+        throw new Error("No submissions found for the given user ID");
+      }
+      return { status: 200, json: submissions };
+    }
+    catch (error) {
+      console.error("Error fetching submissions by user ID:", error);
+      return { status: 500, json: { error: "Failed to fetch submissions by user ID" } };
+    }
   }
   private async handleRequest(
     req: NextRequest,
