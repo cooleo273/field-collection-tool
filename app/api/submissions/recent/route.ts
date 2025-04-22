@@ -1,4 +1,5 @@
-import SubmissionController from "@/lib/controllers/submission.controller";
+
+import SubmissionController from "@/lib/controllers/submissions.controller";
 import { NextRequest, NextResponse } from "next/server";
 
 const submissionController = new SubmissionController();

@@ -14,6 +14,7 @@ import { Save } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { getUsersByEmail } from "@/lib/repositories/user.repository"
+import { getSession } from "@/lib/repositories/auth.repository"
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -28,7 +29,7 @@ export default function SettingsPage() {
   const checkUserRole = async () => {
     try {
       // Get the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await getSession()
       
       if (sessionError) {
         throw sessionError

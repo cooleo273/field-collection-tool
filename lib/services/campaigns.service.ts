@@ -152,25 +152,3 @@ export default class CampaignService {
   
 } 
 
-/**
- * Get campaign by ID
- */
- 
-/**
- * Create a new campaign
- */ 
-/**
- * Update a campaign
- */ 
-
-/**
- * Delete a campaign
- */
-
-
-/**
- * Get campaign count
- */
-
-
- 
