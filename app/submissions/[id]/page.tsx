@@ -273,12 +273,14 @@ export default function SubmissionDetailsPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/submissions/edit/${submission.id}`)}
-            >
-              Edit Submission
-            </Button>
+            {submission.status !== "approved" && (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/submissions/edit/${submission.id}`)}
+              >
+                Edit Submission
+              </Button>
+            )}
             <Button
               variant="default"
               onClick={() => router.push("/submissions")}
@@ -297,7 +299,7 @@ export default function SubmissionDetailsPage() {
                     <CardTitle className="text-xl">{submission.community_group_type}</CardTitle>
                     <CardDescription className="mt-1 flex items-center">
                       <Tag className="h-4 w-4 mr-1" />
-                      {submission.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission.locations?.name || "Unknown location"}
+                      {submission.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission.location || "Unknown location"}
                     </CardDescription>
                   </div>
                   {getStatusBadge(submission.status)}
