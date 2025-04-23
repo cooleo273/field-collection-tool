@@ -78,8 +78,6 @@ export function AddCampaignDialog({ open, onOpenChange, onSuccess }: AddCampaign
         end_date: data.end_date.toISOString(),
         status: "draft" as const,
       }
-
-       ("Creating campaign with data:", campaignData)
       
       await createCampaign(campaignData)
       

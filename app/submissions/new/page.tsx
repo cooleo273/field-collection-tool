@@ -6,7 +6,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent} from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -15,10 +15,10 @@ import { useToast } from "@/components/ui/use-toast"
 import { ImageUpload } from "@/components/image-upload"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { useAuth } from "@/contexts/auth-context"
-import { ArrowLeft, Camera, ClipboardList, Upload } from "lucide-react"
+import { ArrowLeft, Camera } from "lucide-react"
 import { supabase } from "@/lib/services/client"
 import { DashboardLayout } from "@/components/dashboard-layout"
-import { createSubmission } from "@/lib/services/submissions.service"
+import { createSubmission } from "@/lib/services/submissions"
 
 const COMMUNITY_GROUPS = [
     "Women Associations",
@@ -60,7 +60,6 @@ export default function NewSubmissionPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [campaigns, setCampaigns] = useState<any[]>([])
-    const [locations, setLocations] = useState<any[]>([])
     const [uploadedImageUrl, setUploadedImageUrl] = useState("")
 
     const form = useForm<z.infer<typeof formSchema>>({

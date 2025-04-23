@@ -81,8 +81,6 @@ export function EditCampaignDialog({ campaign, open, onOpenChange, onSuccess }: 
         end_date: data.end_date.toISOString(),
         status: data.status,
       }
-
-       ("Updating campaign with data:", campaignData)
       
       await updateCampaign(campaign.id, campaignData)
       

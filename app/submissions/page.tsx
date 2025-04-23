@@ -30,7 +30,7 @@ interface Submission {
   updated_at: string
   // Join data
   campaigns?: { name: string }
-  locations?: { name: string }
+  location?: string
 }
 
 export default function SubmissionsPage() {
@@ -161,7 +161,7 @@ export default function SubmissionsPage() {
                     <span className={getStatusBadgeClass(submission.status)}>{submission.status}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    <p>Location: {submission.locations?.name || 'Unknown'}</p>
+                    <p>Location: {submission.location || 'Unknown'}</p>
                     <p>Campaign: {submission.campaigns?.name || 'Unknown'}</p>
                     <p>Participants: {submission.participant_count}</p>
                     <p>Date: {format(new Date(submission.created_at), "PPP")}</p>
@@ -172,11 +172,13 @@ export default function SubmissionsPage() {
                         <Eye className="mr-1 h-3 w-3" /> View
                       </Link>
                     </Button>
-                    <Button variant="outline" size="sm" asChild className="flex-1">
-                      <Link href={`/submissions/edit/${submission.id}`}>
-                        <Edit className="mr-1 h-3 w-3" /> Edit
-                      </Link>
-                    </Button>
+                    {submission.status !== "approved" && (
+                      <Button variant="outline" size="sm" asChild className="flex-1">
+                        <Link href={`/submissions/edit/${submission.id}`}>
+                          <Edit className="mr-1 h-3 w-3" /> Edit
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
