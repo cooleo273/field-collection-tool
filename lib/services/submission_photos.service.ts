@@ -1,10 +1,7 @@
 import { supabase } from "./client";
 
 
-export default class SubmissionPhotoService {
-  constructor() {}
-
- async getSubmissionStorageData(submissionId: string) {
+export async function getSubmissionStorageData(submissionId: string) {
   try {
         const { data, error } = await supabase.storage
         .from("submission-photos")
@@ -20,7 +17,6 @@ export default class SubmissionPhotoService {
     console.error("Error in getSubmissionStorageData:", error)
     return []
   }
-}
 }
 
 export async function getSubmissionPhotos(submissionId: string) {

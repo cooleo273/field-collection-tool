@@ -42,13 +42,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined' || !userProfile) return;
     
     const currentStoredId = localStorage.getItem('selectedProjectId');
-     ("Refreshing project from storage, ID:", currentStoredId);
     
     if (currentStoredId) {
       try {
         const projectData = await getProjectById(currentStoredId);
         if (projectData) {
-           ("Setting project from storage refresh:", projectData);
           setCurrentProject(projectData);
         }
       } catch (error) {
@@ -68,14 +66,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           ? localStorage.getItem('selectedProjectId') 
           : null;
         
-         ("ProjectContext - Initializing with stored ID:", storedProjectId);
-        
         if (storedProjectId) {
           // Try to fetch the specific project by ID
           const projectData = await getProjectById(storedProjectId);
           
           if (projectData) {
-             ("ProjectContext - Setting project from localStorage:", projectData);
             setCurrentProject(projectData);
             return;
           } else {
@@ -87,7 +82,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         const adminProjects = await getProjectByAdmin(userProfile.id);
         
         if (adminProjects && Array.isArray(adminProjects) && adminProjects.length > 0) {
-           ("ProjectContext - Setting first admin project:", adminProjects[0]);
           setCurrentProject(adminProjects[0]);
           
           // Update localStorage with this project
@@ -109,7 +103,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'selectedProjectId' && e.newValue) {
-         ("Storage event detected, new project ID:", e.newValue);
         refreshProjectFromStorage();
       }
     };

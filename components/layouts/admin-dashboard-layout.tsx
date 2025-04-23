@@ -30,13 +30,6 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname()
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
-   ("AdminDashboardLayout - Current state:", {
-    isLoading,
-    userProfile,
-    user,
-    pathname
-  })
-
   // Close sidebar when path changes (mobile navigation)
   useEffect(() => {
     setSidebarOpen(false)
@@ -86,7 +79,6 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
 
   // If not an admin, show access denied
   if (userProfile.role !== "admin") {
-     ("AdminDashboardLayout - Invalid role:", userProfile.role)
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 text-center">
         <h1 className="text-2xl font-bold">Access Denied</h1>

@@ -2,41 +2,30 @@ import { supabase } from "./client"
 
 const BUCKET_NAME = "submission-photos"
 
-/**
- * Upload an image to Supabase storage
- * @param file The file to upload
- * @param submissionId The ID of the submission this image belongs to
- * @returns The URL of the uploaded image
- */
-export default class StorageService{
-  constructor() {}
- 
-  async deleteImage(url: string): Promise<boolean> {
-    try {
-      // Extract the file path from the URL
-      const filePath = url.split(`${BUCKET_NAME}/`)[1]
-      if (!filePath) {
-        throw new Error("Invalid image URL")
-      }
-  
-      // Delete the file
-      const { error } = await supabase.storage
-        .from(BUCKET_NAME)
-        .remove([filePath])
-  
-      if (error) {
-        console.error("Error deleting image:", error)
-        throw error
-      }
-  
-      return true
-    } catch (error) {
-      console.error("Error in deleteImage:", error)
+export async function deleteImage(url: string): Promise<boolean> {
+  try {
+    // Extract the file path from the URL
+    const filePath = url.split(`${BUCKET_NAME}/`)[1]
+    if (!filePath) {
+      throw new Error("Invalid image URL")
+    }
+
+    // Delete the file
+    const { error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove([filePath])
+
+    if (error) {
+      console.error("Error deleting image:", error)
       throw error
     }
+
+    return true
+  } catch (error) {
+    console.error("Error in deleteImage:", error)
+    throw error
   }
 }
-
 
 
 

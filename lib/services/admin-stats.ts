@@ -201,3 +201,58 @@ function calculateCampaignPerformance(submissions: any[], campaigns: any[]): Cam
     .sort((a, b) => b.value - a.value)
     .slice(0, 10) // Top 10 campaigns
 }
+
+interface PromoterDashboardStats {
+  totalSubmissions: number;
+  submittedSubmissions: number;
+  approvedSubmissions: number;
+  rejectedSubmissions: number;
+}
+
+interface PromoterDashboardData {
+  stats: PromoterDashboardStats;
+  recentSubmissions: any[];
+}
+
+export async function getPromoterDashboardStats(userId: string): Promise<PromoterDashboardData> {
+  const supabase = getSupabaseClient();
+
+  try {
+    // Fetch all submissions by the promoter
+    const { data: submissions, error: submissionsError } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("submitted_by", userId);
+
+    if (submissionsError) throw submissionsError;
+
+    // Calculate stats
+    const totalSubmissions = submissions?.length || 0;
+    const submittedSubmissions = submissions?.filter((s) => s.status === "submitted").length || 0;
+    const approvedSubmissions = submissions?.filter((s) => s.status === "approved").length || 0;
+    const rejectedSubmissions = submissions?.filter((s) => s.status === "rejected").length || 0;
+
+    // Fetch recent submissions
+    const { data: recentSubmissions, error: recentError } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("submitted_by", userId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (recentError) throw recentError;
+
+    return {
+      stats: {
+        totalSubmissions,
+        submittedSubmissions,
+        approvedSubmissions,
+        rejectedSubmissions,
+      },
+      recentSubmissions: recentSubmissions || [],
+    };
+  } catch (error) {
+    console.error("Error fetching promoter dashboard stats:", error);
+    throw error;
+  }
+}
