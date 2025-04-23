@@ -114,10 +114,6 @@ export async function createUserWithAuth(userData: {
 
     // If this is a promoter and we have project ID, create the association
     if (userData.role === 'promoter' && userData.projectId && data.user?.id) {
-       ('Attempting to create project promoter with:', {
-        user_id: data.user.id,
-        project_id: userData.projectId
-      });
 
       const { data: promoterData, error: projectError } = await supabase
         .from('project_promoters')
@@ -134,8 +130,6 @@ export async function createUserWithAuth(userData: {
         await supabase.from('users').delete().eq('id', data.user.id);
         throw new Error(`Failed to create project promoter association: ${projectError.message}`);
       }
-
-       ('Successfully created project promoter:', promoterData);
     }
 
     return {

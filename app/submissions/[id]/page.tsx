@@ -16,7 +16,8 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getSubmissionPhotosById } from "@/lib/repositories/submissions"
+import { getParticipantsCountBySubmissionId } from "@/lib/services/participants"
+import { getSubmissionPhotos } from "@/lib/services/submission_photos.service"
 
 // Match the database schema
 interface Submission {
@@ -64,6 +65,7 @@ export default function SubmissionDetailsPage() {
     const submissionId = params.id as string
     if (submissionId && userProfile) {
       loadSubmission(submissionId)
+      fetchParticipantCount(submissionId)
     }
   }, [params.id, router, userProfile, loading])
 
@@ -89,6 +91,15 @@ export default function SubmissionDetailsPage() {
       console.error("Error loading submission:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchParticipantCount = async (submissionId: string) => {
+    try {
+      const count = await getParticipantsCountBySubmissionId(submissionId)
+      setSubmittedParticipants(count)
+    } catch (error) {
+      console.error("Error fetching participant count:", error)
     }
   }
 
@@ -128,7 +139,7 @@ export default function SubmissionDetailsPage() {
       const fetchPhotos = async () => {
         try {
           // Get photos from the submission_photos table
-          const photoData = await getSubmissionPhotosById(submission.id)
+          const photoData = await getSubmissionPhotos(submission.id)
           
           if (photoData && photoData.length > 0) {
             // Extract the photo URLs
@@ -205,8 +216,8 @@ export default function SubmissionDetailsPage() {
         return
       }
 
-       
-      setSubmittedParticipants((prev) => prev + 1)
+      const participantCount = await getParticipantsCountBySubmissionId(submission?.id || "")
+      setSubmittedParticipants(participantCount)
       setParticipantName("")
       setParticipantAge("")
       setParticipantPhoneNumber("")
@@ -502,13 +513,13 @@ export default function SubmissionDetailsPage() {
             </CardFooter>
           </Card>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end"></div>
           <Button onClick={handleAddParticipant} variant="default">
             Add Participant
           </Button>
         </div>
-      </div>
-    </DashboardLayout>
+      
+    </DashboardLayout>  
   )
 }
 

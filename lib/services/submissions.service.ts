@@ -82,75 +82,9 @@ export default class SubmissionService {
     }
   }
 
-  async createSubmission(
-    submission: Omit<
-      Database["public"]["Tables"]["submissions"]["Insert"],
-      "id" | "created_at" | "updated_at"
-    >,
-    photoUrls?: string[]
-  ) {
-    const { data, error } = await supabase
-      .from("submissions")
-      .insert([
-        {
-          ...submission,
-          status: "submitted" as SubmissionStatus,
-          sync_status: "synced" as SyncStatusType,
-          submitted_at: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
 
-    if (error) {
-      console.error("Error creating submission:", error);
-      throw error;
-    }
 
-    if (photoUrls && photoUrls.length > 0 && data) {
-      const photoEntries = photoUrls.map((url) => ({
-        submission_id: data.id,
-        photo_url: url,
-        created_at: new Date().toISOString(),
-      }));
 
-      const { error: photoError } = await supabase
-        .from("submission_photos")
-        .insert(photoEntries);
-
-      if (photoError) {
-        console.error("Error storing submission photos:", photoError);
-      }
-    }
-
-    return data;
-  }
-
-  async updateSubmission(
-    id: string,
-    submission: Partial<Omit<Submission, "id" | "created_at" | "updated_at">>
-  ) {
-    try {
-      const { data, error } = await supabase
-        .from("submissions")
-        .update({
-          ...submission,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .select();
-
-      if (error) {
-        console.error("Error updating submission:", error);
-        return null;
-      }
-
-      return data?.[0] || null;
-    } catch (error) {
-      console.error("Error in updateSubmission:", error);
-      return null;
-    }
-  }
 
   async deleteSubmission(id: string) {
     try {
@@ -204,5 +138,75 @@ export default class SubmissionService {
       console.error("Error in getRecentSubmissions:", error);
       return [];
     }
+  }
+}
+
+export async function createSubmission(
+  submission: Omit<
+    Database["public"]["Tables"]["submissions"]["Insert"],
+    "id" | "created_at" | "updated_at"
+  >,
+  photoUrls?: string[]
+) {
+  const { data, error } = await supabase
+    .from("submissions")
+    .insert([
+      {
+        ...submission,
+        status: "submitted" as SubmissionStatus,
+        sync_status: "synced" as SyncStatusType,
+        submitted_at: new Date().toISOString(),
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating submission:", error);
+    throw error;
+  }
+
+  if (photoUrls && photoUrls.length > 0 && data) {
+    const photoEntries = photoUrls.map((url) => ({
+      submission_id: data.id,
+      photo_url: url,
+      created_at: new Date().toISOString(),
+    }));
+
+    const { error: photoError } = await supabase
+      .from("submission_photos")
+      .insert(photoEntries);
+
+    if (photoError) {
+      console.error("Error storing submission photos:", photoError);
+    }
+  }
+
+  return data;
+}
+
+export async function updateSubmission(
+  id: string,
+  submission: Partial<Omit<Submission, "id" | "created_at" | "updated_at">>
+) {
+  try {
+    const { data, error } = await supabase
+      .from("submissions")
+      .update({
+        ...submission,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      console.error("Error updating submission:", error);
+      return null;
+    }
+
+    return data?.[0] || null;
+  } catch (error) {
+    console.error("Error in updateSubmission:", error);
+    return null;
   }
 }

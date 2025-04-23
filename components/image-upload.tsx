@@ -28,24 +28,35 @@ export function ImageUpload({
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     try {
-      setIsUploading(true)
-      const file = acceptedFiles[0]
-      if (!file) return
+      setIsUploading(true);
+      const file = acceptedFiles[0];
+      if (!file) return;
 
-      const url = await uploadImage(file, "submissions")
-      setPreview(url)
-      onUpload(url)
+      // Validate file size (e.g., max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "File size exceeds 5MB limit.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const url = await uploadImage(file, "submissions");
+      console.log("Uploaded image URL:", url);
+      setPreview(url);
+      onUpload(url);
     } catch (error) {
-      console.error("Error uploading image:", error)
+      console.error("Error uploading image:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to upload image",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }, [onUpload, toast])
+  }, [onUpload, toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -70,6 +81,14 @@ export function ImageUpload({
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => {
+              setPreview(null);
+              toast({
+                title: "Error",
+                description: "Failed to load image.",
+                variant: "destructive",
+              });
+            }}
           />
           {!isUploading && (
             <Button

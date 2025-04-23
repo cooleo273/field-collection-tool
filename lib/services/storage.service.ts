@@ -10,31 +10,7 @@ const BUCKET_NAME = "submission-photos"
  */
 export default class StorageService{
   constructor() {}
-  async uploadImage(file: File, submissionId: string): Promise<string> {
-    try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random()}.${fileExt}`
-      const filePath = `${submissionId}/${fileName}`
-  
-      const { error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(filePath, file)
-  
-      if (uploadError) {
-        console.error("Error uploading image:", uploadError)
-        throw new Error(uploadError.message || "Failed to upload image")
-      }
-  
-      const { data: { publicUrl } } = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(filePath)
-  
-      return publicUrl
-    } catch (error) {
-      console.error("Error in uploadImage:", error)
-      throw error instanceof Error ? error : new Error("Failed to upload image")
-    }
-  }
+ 
   async deleteImage(url: string): Promise<boolean> {
     try {
       // Extract the file path from the URL
@@ -70,3 +46,30 @@ export function getPublicUrl(path: string): string {
     .getPublicUrl(path)
   return publicUrl
 } 
+
+
+export async function uploadImage(file: File, submissionId: string): Promise<string> {
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random()}.${fileExt}`
+    const filePath = `${submissionId}/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file)
+
+    if (uploadError) {
+      console.error("Error uploading image:", uploadError)
+      throw new Error(uploadError.message || "Failed to upload image")
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(filePath)
+
+    return publicUrl
+  } catch (error) {
+    console.error("Error in uploadImage:", error)
+    throw error instanceof Error ? error : new Error("Failed to upload image")
+  }
+}
