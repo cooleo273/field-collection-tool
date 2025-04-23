@@ -248,6 +248,33 @@ export default function EditSubmissionPage() {
     );
   }
 
+  // Check if the submission is approved
+  if (submission?.status === "approved") {
+    return (
+      <DashboardLayout>
+        <div className="container max-w-4xl mx-auto px-4 py-6 md:py-10">
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+              Submission Approved
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              This submission has already been approved and cannot be edited.
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="container max-w-4xl mx-auto px-4 py-6 md:py-10">

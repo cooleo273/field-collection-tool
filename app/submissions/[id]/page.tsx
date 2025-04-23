@@ -513,10 +513,14 @@ export default function SubmissionDetailsPage() {
             </CardFooter>
           </Card>
         </div>
-        <div className="flex justify-end"></div>
-          <Button onClick={handleAddParticipant} variant="default">
-            Add Participant
-          </Button>
+        <div className="flex justify-end">
+  <Button
+    onClick={() => router.push(`/submissions/${submission.id}/participants`)}
+    variant="default"
+  >
+    View Participants
+  </Button>
+</div>
         </div>
       
     </DashboardLayout>  
