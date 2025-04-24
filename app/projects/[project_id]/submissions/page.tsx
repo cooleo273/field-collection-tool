@@ -102,10 +102,10 @@ export default function ProjectAdminSubmissionsPage() {
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <h3 className="font-medium">
-                                Campaign: {renderField(submission.campaign_id, "Unknown Campaign")}
+                                Project: {renderField(submission.project_id, "Unknown Project")}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                Location: {renderField(submission.location_id, "Unknown Location")} • {submission.community_group_type || "N/A"}
+                                Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline">
@@ -170,10 +170,10 @@ export default function ProjectAdminSubmissionsPage() {
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <h3 className="font-medium">
-                                Campaign: {renderField(submission.campaign_id, "Unknown Campaign")}
+                                Project: {renderField(submission.project_id, "Unknown Project")}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                Location: {renderField(submission.location_id, "Unknown Location")} • {submission.community_group_type || "N/A"}
+                                Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline">
@@ -220,10 +220,10 @@ export default function ProjectAdminSubmissionsPage() {
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <h3 className="font-medium">
-                                Campaign: {renderField(submission.campaign_id, "Unknown Campaign")}
+                                Campaign: {renderField(submission.project_id, "Unknown project")}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                Location: {renderField(submission.location_id, "Unknown Location")} • {submission.community_group_type || "N/A"}
+                                Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline">
@@ -268,10 +268,10 @@ export default function ProjectAdminSubmissionsPage() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                           <div>
                             <h3 className="font-medium">
-                              Campaign: {renderField(submission.campaign_id, "Unknown Campaign")}
+                              Project: {renderField(submission.project_id, "Unknown Project")}
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                              Location: {renderField(submission.location_id, "Unknown Location")} • {submission.community_group_type || "N/A"}
+                              Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="outline">

@@ -20,7 +20,6 @@ import { useAuth } from "@/contexts/auth-context"
 
 // First, let's define interfaces for our data types
 interface DashboardStats {
-  campaigns: number;
   submissions: number;
   pendingSubmissions: number;
   locations: number;
@@ -61,7 +60,6 @@ export function ProjectAdminDashboard() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [assignedProjects, setAssignedProjects] = useState<Array<{ id: string; name: string }>>([])
   const [stats, setStats] = useState<DashboardStats>({
-    campaigns: 0,
     submissions: 0,
     pendingSubmissions: 0,
     locations: 0,
@@ -119,7 +117,7 @@ export function ProjectAdminDashboard() {
         // Ensure userProfile and selectedProjectId are not null
         if (!userProfile || !selectedProjectId) return
         
-        const data = await getProjectAdminDashboardStats(userProfile.id, selectedProjectId)
+        const data = await getProjectAdminDashboardStats(selectedProjectId)
         
         setStats(data.stats)
         setRecentSubmissions(data.recentSubmissions)
@@ -164,25 +162,13 @@ export function ProjectAdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.campaigns.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.submissions.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               In this project
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Campaigns</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.campaigns.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Active campaigns
             </p>
           </CardContent>
         </Card>

@@ -59,11 +59,6 @@ export function Sidebar() {
         icon: Users 
       },
       { 
-        name: "Activities", 
-        href: currentProject ? `/projects/${currentProject.id}/activities` : "/dashboard", 
-        icon: Calendar 
-      },
-      { 
         name: "Locations", 
         href: currentProject ? `/projects/${currentProject.id}/locations` : "/dashboard", 
         icon: Map 

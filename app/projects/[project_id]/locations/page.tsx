@@ -110,13 +110,13 @@ export default function LocationsPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Location Management</h1>
-          <p className="text-muted-foreground">Manage data collection locations</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-primary">Location Management</h1>
+          <p className="text-muted-foreground">Manage data collection locations with ease</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary text-white hover:bg-primary-dark">
           <Plus className="mr-2 h-4 w-4" />
           Add Location
         </Button>
@@ -127,43 +127,52 @@ export default function LocationsPage() {
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Locations</CardTitle>
+      <Card className="shadow-lg border border-muted">
+        <CardHeader className="bg-muted-light p-4">
+          <CardTitle className="text-lg font-semibold text-primary">All Locations</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-auto w-full border-collapse">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Parent Location</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-muted-light">
+                  <TableHead className="px-4 py-2 text-left">Name</TableHead>
+                  <TableHead className="px-4 py-2 text-left">Type</TableHead>
+                  <TableHead className="px-4 py-2 text-left">Created</TableHead>
+                  <TableHead className="px-4 py-2 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {locations.length > 0 ? (
                   locations.map((location) => (
-                    <TableRow key={location.id}>
-                      <TableCell className="font-medium">{location.name}</TableCell>
-                      <TableCell className="capitalize">{location.type}</TableCell>
-                      <TableCell>{parentLocations[location.id] || "-"}</TableCell>
-                      <TableCell>{formatDate(location.created_at)}</TableCell>
-                      <TableCell className="text-right">
+                    <TableRow key={location.id} className="hover:bg-muted-light">
+                      <TableCell className="px-4 py-2 font-medium text-primary-dark">{location.name}</TableCell>
+                      <TableCell className="px-4 py-2 capitalize text-muted-foreground">{location.type}</TableCell>
+                      <TableCell className="px-4 py-2 text-muted-foreground">{formatDate(location.created_at)}</TableCell>
+                      <TableCell className="px-4 py-2 text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
                             variant="ghost" 
                             size="icon"
                             onClick={() => handleMapClick(location)}
+                            className="text-primary hover:text-primary-dark"
                           >
                             <MapPin className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(location)}>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(location)}
+                            className="text-primary hover:text-primary-dark"
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(location)}>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDelete(location)}
+                            className="text-red-500 hover:text-red-700"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -172,7 +181,7 @@ export default function LocationsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
                       No locations found
                     </TableCell>
                   </TableRow>

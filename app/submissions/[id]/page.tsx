@@ -143,7 +143,7 @@ export default function SubmissionDetailsPage() {
           
           if (photoData && photoData.length > 0) {
             // Extract the photo URLs
-            setPhotos(photoData.map(item => item.photo_url))
+            setPhotos(photoData.map(item => item?.photo_url))
           } else {
             // Fallback: Try to list files from the storage bucket directly
             const { data: storageData, error: storageError } = await supabase.storage
@@ -156,7 +156,7 @@ export default function SubmissionDetailsPage() {
                 .map(item => {
                   const { data: { publicUrl } } = supabase.storage
                     .from("submission-photos")
-                    .getPublicUrl(`${submission.id}/${item.name}`)
+                    .getPublicUrl(`${submission?.id}/${item?.name}`)
                   return publicUrl
                 })
               setPhotos(photoUrls)
@@ -268,7 +268,7 @@ export default function SubmissionDetailsPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Submission Details</h1>
               <p className="text-muted-foreground">
-                Submitted on {formatDate(submission.submitted_at || submission.created_at)}
+                Submitted on {formatDate(submission?.submitted_at || submission?.created_at)}
               </p>
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function SubmissionDetailsPage() {
             {submission.status !== "approved" && (
               <Button
                 variant="outline"
-                onClick={() => router.push(`/submissions/edit/${submission.id}`)}
+                onClick={() => router.push(`/submissions/edit/${submission?.id}`)}
               >
                 Edit Submission
               </Button>
@@ -296,20 +296,20 @@ export default function SubmissionDetailsPage() {
               <CardHeader className="pb-3 bg-muted/30">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-xl">{submission.community_group_type}</CardTitle>
+                    <CardTitle className="text-xl">{submission?.activity_stream}</CardTitle>
                     <CardDescription className="mt-1 flex items-center">
                       <Tag className="h-4 w-4 mr-1" />
-                      {submission.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission.location || "Unknown location"}
+                      {submission?.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission?.location || "Unknown location"}
                     </CardDescription>
                   </div>
-                  {getStatusBadge(submission.status)}
+                  {getStatusBadge(submission?.status)}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6 pt-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-3">Key Issues/Takeaways</h3>
                   <div className="bg-muted/20 p-4 rounded-lg">
-                    <p className="text-sm leading-relaxed">{submission.key_issues || "No key issues recorded"}</p>
+                    <p className="text-sm leading-relaxed">{submission?.key_issues || "No key issues recorded"}</p>
                   </div>
                 </div>
 
@@ -356,7 +356,7 @@ export default function SubmissionDetailsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-red-700 italic">{submission.review_notes}</p>
+                  <p className="text-red-700 italic">{submission?.review_notes}</p>
                 </CardContent>
                 <CardFooter className="border-t border-red-200 pt-4">
                   <Button variant="outline" className="w-full" onClick={() => router.push("/submissions/new")}>
@@ -377,7 +377,7 @@ export default function SubmissionDetailsPage() {
                   {getStatusIcon(submission.status)}
                 </div>
                 <h3 className="font-medium text-lg mb-2">
-                  {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                  {submission?.status.charAt(0).toUpperCase() + submission?.status.slice(1)}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {submission.status === "approved" && "This submission has been reviewed and approved."}
@@ -390,7 +390,7 @@ export default function SubmissionDetailsPage() {
                   <div className="mt-6 p-4 bg-muted/20 rounded-lg w-full">
                     <p className="text-sm font-medium">Reviewed by</p>
                     <p className="text-sm text-muted-foreground">Project Admin</p>
-                    {submission.reviewed_at && (
+                    {submission?.reviewed_at && (
                       <p className="text-xs text-muted-foreground mt-1">
                         <Calendar className="h-3 w-3 inline mr-1" />
                         {formatDate(submission.reviewed_at)}
@@ -413,7 +413,7 @@ export default function SubmissionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Location</p>
-                      <p className="text-sm text-muted-foreground">{submission.locations?.name || "Unknown"}</p>
+                      <p className="text-sm text-muted-foreground">{submission?.locations?.name || "Unknown"}</p>
                     </div>
                   </li>
                   <li className="flex items-start">
@@ -422,7 +422,7 @@ export default function SubmissionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Participants</p>
-                      <p className="text-sm text-muted-foreground">{submission.participant_count} people</p>
+                      <p className="text-sm text-muted-foreground">{submission?.participant_count} people</p>
                     </div>
                   </li>
                   <li className="flex items-start">
@@ -431,7 +431,7 @@ export default function SubmissionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Campaign</p>
-                      <p className="text-sm text-muted-foreground">{submission.campaigns?.name || "Unknown"}</p>
+                      <p className="text-sm text-muted-foreground">{submission?.campaigns?.name || "Unknown"}</p>
                     </div>
                   </li>
                   <li className="flex items-start">
@@ -450,7 +450,7 @@ export default function SubmissionDetailsPage() {
                     <div>
                       <p className="text-sm font-medium">Submitted On</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(submission.submitted_at || submission.created_at)}
+                        {formatDate(submission?.submitted_at || submission?.created_at)}
                       </p>
                     </div>
                   </li>
@@ -510,14 +510,14 @@ export default function SubmissionDetailsPage() {
             </CardContent>
             <CardFooter>
               <p className="text-sm text-muted-foreground">
-                {submittedParticipants}/{submission.participant_count} participants added.
+                {submittedParticipants}/{submission?.participant_count} participants added.
               </p>
             </CardFooter>
           </Card>
         </div>
         <div className="flex justify-end">
   <Button
-    onClick={() => router.push(`/submissions/${submission.id}/participants`)}
+    onClick={() => router.push(`/submissions/${submission?.id}/participants`)}
     variant="default"
   >
     View Participants
