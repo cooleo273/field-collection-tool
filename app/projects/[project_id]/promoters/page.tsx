@@ -26,6 +26,7 @@ import { useParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { useProject } from "@/contexts/project-context"
 import { useRouter } from "next/navigation";
+import { getSubmissionCountByPromoterId } from "@/lib/services/submissions";
 
 export default function ProjectAdminPromotersPage() {
   const router = useRouter();
@@ -97,28 +98,38 @@ export default function ProjectAdminPromotersPage() {
 
   const loadPromoters = async () => {
     if (!projectId) {
-      console.error("No project ID found in URL")
+      console.error("No project ID found in URL");
       toast({
         title: "Error loading promoters",
         description: "Project ID is missing. Please ensure you're accessing this page correctly.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
-    if (!userProfile) return
-    setLoading(true)
+    if (!userProfile) return;
+    setLoading(true);
     try {
-      const promotersData = await getProjectPromoters(projectId, userProfile.id)
-      setPromoters(promotersData)
+      const promotersData = await getProjectPromoters(projectId);
+
+      // Fetch submission counts for each promoter
+      const enrichedPromoters = await Promise.all(
+        promotersData.map(async (promoter) => {
+          const submissionCount = await getSubmissionCountByPromoterId(promoter.id);
+          return { ...promoter, submissionCount };
+        })
+      );
+
+      console.log("Enriched Promoters:", enrichedPromoters); // Debug log
+      setPromoters(enrichedPromoters);
     } catch (error) {
-      console.error("Error loading promoters:", error)
+      console.error("Error loading promoters:", error);
       toast({
         title: "Error loading promoters",
         description: "There was a problem loading the promoter list. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -244,7 +255,7 @@ export default function ProjectAdminPromotersPage() {
                       </TableCell> */}
                       <TableCell>
                         <Badge variant="outline">
-                          {promoter.submissions ? promoter.submissions.length : 0} submissions
+                          {promoter.submissions ? promoter.submissionCount : 0} submissions
                         </Badge>
                       </TableCell>
                       <TableCell>

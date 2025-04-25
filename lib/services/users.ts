@@ -520,11 +520,12 @@ interface PromoterWithProjectData {
   submissions: Array<{ id: string }>;
 }
 
-export async function getProjectPromoters(projectId: string, adminId: string) {
+export async function getProjectPromoters(projectId: string) {
   try {
     const { data, error } = await supabase
       .from('project_promoters')
       .select(`
+        user_id,
         users (
           id,
           name,
@@ -536,22 +537,22 @@ export async function getProjectPromoters(projectId: string, adminId: string) {
           location_id
         )
       `)
-      .eq('project_id', projectId)
+      .eq('project_id', projectId);
 
     if (error) {
-      console.error("Error fetching project promoters:", error)
-      throw error
+      console.error("Error fetching project promoters:", error);
+      throw error;
     }
 
     // Transform the data to match the expected format
     return data?.map(item => ({
-      ...item.users,
+      id: item.user_id, // Use user_id as the id
       assignedLocations: item.project_promoter_locations || [],
       submissions: [] // Return empty array for submissions since it's not available
-    })) || []
+    })) || [];
   } catch (error) {
-    console.error("Error in getProjectPromoters:", error)
-    throw error
+    console.error("Error in getProjectPromoters:", error);
+    throw error;
   }
 }
 

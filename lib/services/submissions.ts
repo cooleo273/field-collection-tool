@@ -225,3 +225,26 @@ export async function updateSubmissionStatus(submissionId: string, status: "appr
     throw error;
   }
 }
+
+export async function getSubmissionCountByPromoterId(promoterId: string): Promise<number> {
+  try {
+    console.log("Fetching submission count for promoter ID:", promoterId); // Debug log
+
+    const { count, error } = await supabase
+      .from("submissions")
+      .select("id", { count: "exact", head: true }) // Ensure we are counting the correct field
+      .eq("submitted_by", promoterId); // Match the promoter ID with the submitted_by field
+
+    if (error) {
+      console.error("Error fetching submission count for promoter ID:", error);
+      return 0;
+    }
+
+    console.log("Submission count for promoter ID:", promoterId, "is", count); // Debug log
+
+    return count || 0; // Return the count or 0 if no submissions are found
+  } catch (error) {
+    console.error("Error in getSubmissionCountByPromoterId:", error);
+    return 0;
+  }
+}
