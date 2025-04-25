@@ -6,15 +6,9 @@ import { cn } from "@/lib/utils"
 import {
   Users,
   Map,
-  Settings,
   ClipboardList,
   Upload,
-  CheckSquare,
-  UserCog,
-  UserPlus,
-  FileInput,
   PieChart,
-  Calendar,
   LayoutDashboard,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
@@ -78,7 +72,6 @@ export function Sidebar() {
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "New Submission", href: "/submissions/new", icon: Upload },
       { name: "My Submissions", href: "/submissions", icon: ClipboardList },
-      { name: "Reports", href: "/submissions/reports", icon: PieChart },
     ]
     // Promoter items remain unchanged
   }

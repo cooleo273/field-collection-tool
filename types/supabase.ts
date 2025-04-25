@@ -132,7 +132,7 @@ export interface Database {
         Row: {
           id: string
           activity_stream: string | null
-          location: string | null
+          specific_location: string | null
           community_group_type: string
           participant_count: number
           key_issues: string | null
@@ -145,11 +145,12 @@ export interface Database {
           sync_status: string
           created_at: string
           updated_at: string
+          project_id: string // Added project_id field
         }
         Insert: {
           id?: string
           activity_stream?: string | null
-          location?: string | null
+          specific_location?: string | null
           community_group_type: string
           participant_count: number
           key_issues?: string | null
@@ -162,11 +163,12 @@ export interface Database {
           sync_status?: string
           created_at?: string
           updated_at?: string
+          project_id: string // Added project_id field
         }
         Update: {
           id?: string
           activity_stream?: string | null
-          location?: string | null
+          specific_location?: string | null
           community_group_type?: string
           participant_count?: number
           key_issues?: string | null
@@ -179,6 +181,7 @@ export interface Database {
           sync_status?: string
           created_at?: string
           updated_at?: string
+          project_id?: string // Added project_id field
         }
       }
     }

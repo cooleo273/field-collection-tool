@@ -113,7 +113,7 @@ export default function LocationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-primary">Location Management</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Location Management</h1>
           <p className="text-muted-foreground">Manage data collection locations with ease</p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary text-white hover:bg-primary-dark">
@@ -129,7 +129,7 @@ export default function LocationsPage() {
 
       <Card className="shadow-lg border border-muted">
         <CardHeader className="bg-muted-light p-4">
-          <CardTitle className="text-lg font-semibold text-primary">All Locations</CardTitle>
+          <CardTitle className="text-lg font-semibold">All Locations</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">

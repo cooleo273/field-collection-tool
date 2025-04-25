@@ -19,6 +19,7 @@ import { ArrowLeft, Camera } from "lucide-react"
 import { supabase } from "@/lib/services/client"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { createSubmission } from "@/lib/services/submissions"
+import { useProject } from '@/contexts/project-context';
 
 const COMMUNITY_GROUPS = [
     "Women Associations",
@@ -46,7 +47,7 @@ const ACTIVITY_STREAM =[
 // Updated form schema to match the database schema
 const formSchema = z.object({
     activity_stream: z.string().min(1, "Activity is required"),
-    location: z.string().min(1, "Location is required"),
+    specific_location: z.string().min(1, "Location is required"),
     community_group_type: z.string().min(1, "Community group type is required"),
     participant_count: z.coerce.number().min(1, "At least one participant is required"),
     key_issues: z.string().min(10, "Please provide more details about key issues discussed"),
@@ -57,6 +58,7 @@ export default function NewSubmissionPage() {
     const router = useRouter()
     const { toast } = useToast()
     const { userProfile } = useAuth()
+    const { currentProject } = useProject(); // Use ProjectContext to get the current project
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [campaigns, setCampaigns] = useState<any[]>([])
@@ -66,7 +68,7 @@ export default function NewSubmissionPage() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             activity_stream:"",
-            location: "",
+            specific_location: "",
             community_group_type: "",
             participant_count: 0,
             key_issues: "",
@@ -112,14 +114,21 @@ export default function NewSubmissionPage() {
     }
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        if (!userProfile) return
+        if (!userProfile || !currentProject) {
+            toast({
+                title: "Error",
+                description: "User profile or project context is missing.",
+                variant: "destructive",
+            });
+            return;
+        }
 
         setIsSubmitting(true)
         try {
             // Create the submission
             const submission = await createSubmission({
                 activity_stream: values.activity_stream,
-                location: values.location,
+                specific_location: values.specific_location,
                 community_group_type: values.community_group_type,
                 participant_count: values.participant_count,
                 key_issues: values.key_issues,
@@ -127,6 +136,7 @@ export default function NewSubmissionPage() {
                 submitted_by: userProfile.id,
                 submitted_at: new Date().toISOString(),
                 sync_status: "local",
+                project_id: currentProject.id, // Use project_id from ProjectContext
             })
 
             // Store the photo URLs in the submission_photos table
@@ -232,10 +242,10 @@ export default function NewSubmissionPage() {
 
                                     <FormField
                                         control={form.control}
-                                        name="location"
+                                        name="specific_location"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Location</FormLabel>
+                                                <FormLabel>Specific Location</FormLabel>
                                                 <FormControl>
                                                     <Input type="text" className="h-10" {...field} />
                                                 </FormControl>
