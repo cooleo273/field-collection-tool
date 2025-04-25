@@ -215,7 +215,7 @@ export default function ProjectAdminPromotersPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Assigned Locations</TableHead>
+                    {/* <TableHead>Assigned Locations</TableHead> */}
                     <TableHead>Submissions</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -226,7 +226,7 @@ export default function ProjectAdminPromotersPage() {
                     <TableRow key={promoter.id}>
                       <TableCell className="font-medium">{promoter.name}</TableCell>
                       <TableCell>{promoter.email}</TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         {promoter.assignedLocations && promoter.assignedLocations.length > 0 ? (
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -235,7 +235,7 @@ export default function ProjectAdminPromotersPage() {
                         ) : (
                           <Badge variant="outline" className="text-muted-foreground">None assigned</Badge>
                         )}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <Badge variant="outline">
                           {promoter.submissions ? promoter.submissions.length : 0} submissions
