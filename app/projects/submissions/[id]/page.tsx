@@ -238,7 +238,7 @@ export default function SubmissionDetailsPage() {
     if (previousPageRef.current) {
       router.push(previousPageRef.current)
     } else {
-      router.push("/dashboard") // Default fallback
+      router.push("/das") // Default fallback
     }
   }
 

@@ -547,6 +547,10 @@ export async function getProjectPromoters(projectId: string) {
     // Transform the data to match the expected format
     return data?.map(item => ({
       id: item.user_id, // Use user_id as the id
+      name: item.users?.name,
+      email: item.users?.email,
+      status: item.users?.status,
+      role: item.users?.role,
       assignedLocations: item.project_promoter_locations || [],
       submissions: [] // Return empty array for submissions since it's not available
     })) || [];
