@@ -25,8 +25,10 @@ import {
 import { useParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { useProject } from "@/contexts/project-context"
+import { useRouter } from "next/navigation";
 
 export default function ProjectAdminPromotersPage() {
+  const router = useRouter();
   const params = useParams()
   const projectId = params.project_id as string
   const { userProfile } = useAuth()
@@ -142,6 +144,10 @@ export default function ProjectAdminPromotersPage() {
     setShowAssignDialog(true)
   }
 
+  const handleViewPromoter = (promoterId: string) => {
+    router.push(`/projects/${projectId}/promoters/${promoterId}`);
+  };
+
   const confirmDeletePromoter = async () => {
     if (!selectedPromoter) return
 
@@ -223,7 +229,7 @@ export default function ProjectAdminPromotersPage() {
                 </TableHeader>
                 <TableBody>
                   {promoters.map((promoter) => (
-                    <TableRow key={promoter.id}>
+                    <TableRow key={promoter.id} onClick={() => handleViewPromoter(promoter.id)} className="cursor-pointer">
                       <TableCell className="font-medium">{promoter.name}</TableCell>
                       <TableCell>{promoter.email}</TableCell>
                       {/* <TableCell>

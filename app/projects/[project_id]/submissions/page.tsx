@@ -10,7 +10,7 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 import { RefreshCw, CheckCircle, XCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { getSubmissions, updateSubmissionStatus } from "@/lib/services/submissions"
-import { getProjectSubmissions } from "@/lib/services/admin-stats"
+import { getProjectSubmissions, getProjectDetails, getUserDetails } from "@/lib/services/admin-stats"
 
 
 export default function ProjectAdminSubmissionsPage({ params }: { params: { project_id: string } }) {
@@ -25,14 +25,25 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
   }, [])
 
   const loadSubmissions = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await getProjectSubmissions(project_id)
-      setSubmissions(data)
+      const data = await getProjectSubmissions(project_id);
+      const enrichedData = await Promise.all(
+        data.map(async (submission) => {
+          const projectDetails = await getProjectDetails(submission.project_id); // Fetch project details
+          const userDetails = await getUserDetails(submission.submitted_by); // Fetch user details
+          return {
+            ...submission,
+            project_name: projectDetails.name,
+            submitted_by_name: userDetails.name,
+          };
+        })
+      );
+      setSubmissions(enrichedData);
     } catch (error) {
-      console.error("Error loading submissions:", error)
+      console.error("Error loading submissions:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -48,7 +59,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
 
   // Handler to navigate to the submission details page
   const handleViewDetails = (submissionId: string) => {
-    router.push(`/submissions/${submissionId}`)
+    router.push(`/projects/submissions/${submissionId}`)
   }
 
   if (loading) {
@@ -105,7 +116,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <h3 className="font-medium">
-                                Project: {renderField(submission.project_id, "Unknown Project")}
+                                Project: {submission.project_name || "Unknown Project"}
                               </h3>
                               <p className="text-sm text-muted-foreground">
                                 Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
@@ -115,7 +126,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                   {submission.participant_count} participants
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
-                                  Submitted by {renderField(submission.submitted_by, "Unknown User")} on {formatDate(submission.submitted_at)}
+                                  Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
                                 </span>
                               </div>
                             </div>
@@ -173,7 +184,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <h3 className="font-medium">
-                                Project: {renderField(submission.project_id, "Unknown Project")}
+                                Project: {submission.project_name || "Unknown Project"}
                               </h3>
                               <p className="text-sm text-muted-foreground">
                                 Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
@@ -183,7 +194,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                   {submission.participant_count} participants
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
-                                  Submitted by {renderField(submission.submitted_by, "Unknown User")} on {formatDate(submission.submitted_at)}
+                                  Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
                                 </span>
                               </div>
                             </div>
@@ -223,7 +234,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <h3 className="font-medium">
-                                Campaign: {renderField(submission.project_id, "Unknown project")}
+                                Campaign: {submission.project_name || "Unknown project"}
                               </h3>
                               <p className="text-sm text-muted-foreground">
                                 Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
@@ -233,7 +244,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                   {submission.participant_count} participants
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
-                                  Submitted by {renderField(submission.submitted_by, "Unknown User")} on {formatDate(submission.submitted_at)}
+                                  Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
                                 </span>
                               </div>
                             </div>
@@ -271,7 +282,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                           <div>
                             <h3 className="font-medium">
-                              Project: {renderField(submission.project_id, "Unknown Project")}
+                              Project: {submission.project_name || "Unknown Project"}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
@@ -281,7 +292,7 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                 {submission.participant_count} participants
                               </Badge>
                               <span className="text-xs text-muted-foreground">
-                                Submitted by {renderField(submission.submitted_by, "Unknown User")} on {formatDate(submission.submitted_at)}
+                                Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
                               </span>
                             </div>
                           </div>

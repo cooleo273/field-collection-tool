@@ -38,13 +38,13 @@ export async function getSubmissionsByUserId(userId: string) {
     const { data, error } = await supabase
       .from("submissions")
       .select(
-        "*, users(name, email, role), locations(name, address), campaigns(name, description)"
+        "*, users!submissions_submitted_by_fkey(name, email, role)"
       )
       .eq("submitted_by", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching submissions by user ID:", error);
+      console.error("Error fetching submissions by user ID:"  , error);
       return [];
     }
 

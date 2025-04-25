@@ -282,3 +282,41 @@ export async function getProjectSubmissions(projectId: string) {
     throw error;
   }
 }
+
+export async function getProjectDetails(projectId: string) {
+  const supabase = getSupabaseClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("name")
+      .eq("id", projectId)
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching project details:", error);
+    throw error;
+  }
+}
+
+export async function getUserDetails(userId: string) {
+  const supabase = getSupabaseClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("name")
+      .eq("id", userId)
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    throw error;
+  }
+}

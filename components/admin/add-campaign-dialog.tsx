@@ -109,6 +109,7 @@ export function AddCampaignDialog({ open, onOpenChange, onSuccess }: AddCampaign
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
+        <DialogTitle>Add Campaign</DialogTitle>
         <DialogHeader>
           <DialogTitle>Create New Campaign</DialogTitle>
           <DialogDescription>
