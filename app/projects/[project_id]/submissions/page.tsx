@@ -10,9 +10,12 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 import { RefreshCw, CheckCircle, XCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { getSubmissions, updateSubmissionStatus } from "@/lib/services/submissions"
+import { getProjectSubmissions } from "@/lib/services/admin-stats"
 
 
-export default function ProjectAdminSubmissionsPage() {
+export default function ProjectAdminSubmissionsPage({ params }: { params: { project_id: string } }) {
+  
+  const { project_id } = params;
   const router = useRouter()
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,7 +27,7 @@ export default function ProjectAdminSubmissionsPage() {
   const loadSubmissions = async () => {
     setLoading(true)
     try {
-      const data = await getSubmissions()
+      const data = await getProjectSubmissions(project_id)
       setSubmissions(data)
     } catch (error) {
       console.error("Error loading submissions:", error)
