@@ -228,7 +228,6 @@ export async function updateSubmissionStatus(submissionId: string, status: "appr
 
 export async function getSubmissionCountByPromoterId(promoterId: string): Promise<number> {
   try {
-    console.log("Fetching submission count for promoter ID:", promoterId); // Debug log
 
     const { count, error } = await supabase
       .from("submissions")
@@ -240,7 +239,6 @@ export async function getSubmissionCountByPromoterId(promoterId: string): Promis
       return 0;
     }
 
-    console.log("Submission count for promoter ID:", promoterId, "is", count); // Debug log
 
     return count || 0; // Return the count or 0 if no submissions are found
   } catch (error) {

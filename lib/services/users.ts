@@ -89,52 +89,92 @@ export async function getUserByEmail(email: string) {
  * Create a user in both Supabase Auth and the users table
  * This ensures users can actually login after being created
  */
-export async function createUserWithAuth(userData: { 
-  name: string; 
-  email: string; 
-  role: string; 
+// ... existing code ...
+
+/**
+ * Create a user in both Supabase Auth and the users table
+ * This ensures users can actually login after being created
+ */
+export async function createUserWithAuth(userData: {
+  name: string;
+  email: string;
+  role: string;
   status?: string;
   projectId?: string;
 }) {
   try {
-    // Call the server-side API endpoint to create the user
-    const response = await fetch('/api/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
+    // Generate a random password for the new user
+    const password = generateRandomPassword(12); // Use the existing helper function
+
+    // Create the user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: userData.email,
+      password: password,
+      options: {
+        // You might want to add email confirmation logic here if needed
+        // emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          // Include non-sensitive data you want stored in auth.users.raw_user_meta_data
+          name: userData.name,
+          role: userData.role,
+        }
+      }
     });
 
-    const data = await response.json();
+    if (authError) {
+      console.error("Error creating user in Supabase Auth:", authError);
+      throw new Error(`Failed to create user authentication: ${authError.message}`);
+    }
 
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to create user");
+    if (!authData.user) {
+      throw new Error("User authentication created, but no user data returned.");
+    }
+
+    // Now create the user profile in the 'users' table
+    const { data: dbUser, error: dbError } = await supabase
+      .from('users')
+      .insert({
+        id: authData.user.id, // Use the ID from the Auth user
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        status: userData.status || 'active', // Default status if not provided
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error("Error creating user profile in database:", dbError);
+      // Attempt to clean up the Auth user if DB insert fails
+      // Note: Supabase Admin client needed for direct user deletion usually.
+      // This might require a server-side function call for cleanup.
+      // For now, we just log and throw.
+      throw new Error(`Failed to create user profile in database: ${dbError.message}`);
     }
 
     // If this is a promoter and we have project ID, create the association
-    if (userData.role === 'promoter' && userData.projectId && data.user?.id) {
-
-      const { data: promoterData, error: projectError } = await supabase
+    if (userData.role === 'promoter' && userData.projectId && dbUser?.id) {
+      const { error: projectError } = await supabase
         .from('project_promoters')
         .insert({
-          user_id: data.user.id,
+          user_id: dbUser.id,
           project_id: userData.projectId
         })
         .select()
         .single();
 
       if (projectError) {
-        console.error('Error creating project promoter:', projectError);
-        // Clean up the created user if association fails
-        await supabase.from('users').delete().eq('id', data.user.id);
+        console.error('Error creating project promoter association:', projectError);
+        // Clean up the created user profile if association fails
+        await supabase.from('users').delete().eq('id', dbUser.id);
+        // Consider cleaning up the Auth user as well (might need server-side call)
         throw new Error(`Failed to create project promoter association: ${projectError.message}`);
       }
     }
 
     return {
-      user: data.user,
-      password: data.password
+      user: dbUser,
+      password: password // Return the generated password
     };
   } catch (error) {
     console.error("Error in createUserWithAuth:", error);
@@ -142,6 +182,11 @@ export async function createUserWithAuth(userData: {
   }
 }
 
+/**
+ * Generate a random password
+ */
+
+// ... existing code ...
 /**
  * Generate a random password
  */
@@ -212,23 +257,14 @@ export async function updateUser(id: string, data: UserUpdate) {
  * Delete a user
  * This will delete the user from both the database and Supabase auth
  */
-export async function deleteUser(id: string) {
+export async function deleteUser(id: string): Promise<boolean> {
   try {
-    // Call the server-side API endpoint to delete the user
-    const response = await fetch(`/api/users/${id}`, {
-      method: 'DELETE',
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to delete user");
-    }
-
+    const { error } = await supabase.from("users").delete().eq("id", id);
+    if (error) throw error;
     return true;
   } catch (error) {
-    console.error("Error in deleteUser:", error);
-    throw error instanceof Error ? error : new Error("Unknown error occurred while deleting user");
+    console.error("Error deleting user:", error);
+    throw error;
   }
 }
 

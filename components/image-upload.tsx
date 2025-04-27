@@ -43,7 +43,6 @@ export function ImageUpload({
       }
 
       const url = await uploadImage(file, "submissions");
-      console.log("Uploaded image URL:", url);
       setPreview(url);
       onUpload(url);
     } catch (error) {

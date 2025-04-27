@@ -119,7 +119,6 @@ export default function ProjectAdminPromotersPage() {
         })
       );
 
-      console.log("Enriched Promoters:", enrichedPromoters); // Debug log
       setPromoters(enrichedPromoters);
     } catch (error) {
       console.error("Error loading promoters:", error);
