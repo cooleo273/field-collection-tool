@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,10 +12,10 @@ import { formatDate } from "@/lib/utils"
 import { getSubmissions, updateSubmissionStatus } from "@/lib/services/submissions"
 import { getProjectSubmissions, getProjectDetails, getUserDetails } from "@/lib/services/admin-stats"
 
+export default function ProjectAdminSubmissionsPage() {
+  const params = useParams();
+  const project_id = params.project_id as string; // Directly access and type project_id
 
-export default function ProjectAdminSubmissionsPage({ params }: { params: { project_id: string } }) {
-  
-  const { project_id } = params;
   const router = useRouter()
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,6 +61,10 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
   const handleViewDetails = (submissionId: string) => {
     router.push(`/projects/submissions/${submissionId}`)
   }
+
+  const handlePromoterClick = (promoterId: string) => {
+    router.push(`/projects/${project_id}/promoters/${promoterId}`);
+  };
 
   if (loading) {
     return <LoadingSpinner />
@@ -126,7 +130,18 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                   {submission.participant_count} participants
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
-                                  Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
+                                  Submitted by 
+                                  <a
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handlePromoterClick(submission.submitted_by);
+                                    }}
+                                    className="text-blue-500 underline"
+                                  >
+                                    {submission.submitted_by_name}
+                                  </a>
+                                  on {formatDate(submission.submitted_at)}
                                 </span>
                               </div>
                             </div>
@@ -194,7 +209,18 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                   {submission.participant_count} participants
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
-                                  Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
+                                  Submitted by 
+                                  <a
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handlePromoterClick(submission.submitted_by);
+                                    }}
+                                    className="text-blue-500 underline"
+                                  >
+                                    {submission.submitted_by_name}
+                                  </a>
+                                  on {formatDate(submission.submitted_at)}
                                 </span>
                               </div>
                             </div>
@@ -244,7 +270,18 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                   {submission.participant_count} participants
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
-                                  Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
+                                  Submitted by 
+                                  <a
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handlePromoterClick(submission.submitted_by);
+                                    }}
+                                    className="text-blue-500 underline"
+                                  >
+                                    {submission.submitted_by_name}
+                                  </a>
+                                  on {formatDate(submission.submitted_at)}
                                 </span>
                               </div>
                             </div>
@@ -292,7 +329,18 @@ export default function ProjectAdminSubmissionsPage({ params }: { params: { proj
                                 {submission.participant_count} participants
                               </Badge>
                               <span className="text-xs text-muted-foreground">
-                                Submitted by {submission.submitted_by_name || "Unknown User"} on {formatDate(submission.submitted_at)}
+                                Submitted by 
+                                <a
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handlePromoterClick(submission.submitted_by);
+                                  }}
+                                  className="text-blue-500 underline"
+                                >
+                                  {submission.submitted_by_name}
+                                </a>
+                                on {formatDate(submission.submitted_at)}
                               </span>
                             </div>
                           </div>

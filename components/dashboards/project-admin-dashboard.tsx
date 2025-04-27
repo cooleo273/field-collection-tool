@@ -13,7 +13,6 @@ import {
   ClipboardList,
   Calendar
 } from "lucide-react"
-import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button } from "@/components/ui/button"
 import { getProjectAdminDashboardStats } from "@/lib/services/admin-stats"
 import { useAuth } from "@/contexts/auth-context"

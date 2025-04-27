@@ -240,19 +240,20 @@ export default function ProjectAdminPromotersPage() {
                 </TableHeader>
                 <TableBody>
                   {promoters.map((promoter) => (
-                    <TableRow key={promoter.id} onClick={() => handleViewPromoter(promoter.id)} className="cursor-pointer">
+                    <TableRow
+                      key={promoter.id}
+                      onClick={(e) => {
+                        const target = e.target as Element; // Cast e.target to Element
+                        // Prevent navigation to details page if clicking on action buttons
+                        if (target.closest("button") || target.closest("svg")) {
+                          return;
+                        }
+                        handleViewPromoter(promoter.id);
+                      }}
+                      className="cursor-pointer"
+                    >
                       <TableCell className="font-medium">{promoter.name}</TableCell>
                       <TableCell>{promoter.email}</TableCell>
-                      {/* <TableCell>
-                        {promoter.assignedLocations && promoter.assignedLocations.length > 0 ? (
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-                            <span>{promoter.assignedLocations.length} locations</span>
-                          </div>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">None assigned</Badge>
-                        )}
-                      </TableCell> */}
                       <TableCell>
                         <Badge variant="outline">
                           {promoter.submissions ? promoter.submissionCount : 0} submissions
@@ -265,25 +266,34 @@ export default function ProjectAdminPromotersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleAssignLocations(promoter)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click
+                              handleAssignLocations(promoter);
+                            }}
                           >
                             <MapPin className="h-3.5 w-3.5 mr-1" />
                             Assign
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
-                            onClick={() => handleEditPromoter(promoter)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click
+                              handleEditPromoter(promoter);
+                            }}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
-                            onClick={() => handleDeletePromoter(promoter)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click
+                              handleDeletePromoter(promoter);
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

@@ -280,6 +280,9 @@ export default function SubmissionDetailsPage() {
             <p className="text-muted-foreground">
               Submitted on {formatDate(submission?.submitted_at || submission?.created_at)}
             </p>
+            <p className="text-muted-foreground">
+              Submitted by: {submission?.users?.name} ({submission?.users?.email})
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
