@@ -45,21 +45,18 @@ export default function ProjectAdminPromotersPage() {
     
     // If URL doesn't match localStorage, update URL to match localStorage
     if (currentStoredId && currentStoredId !== projectId) {
-       ("URL doesn't match localStorage, redirecting to correct project");
       window.location.href = `/projects/${currentStoredId}/promoters`;
       return;
     }
     
     // If localStorage doesn't match URL, update localStorage to match URL
     if (projectId && (!currentStoredId || currentStoredId !== projectId)) {
-       ("localStorage doesn't match URL, updating localStorage");
       localStorage.setItem('selectedProjectId', projectId);
       refreshProjectFromStorage();
     }
     
     // If current project doesn't match URL, refresh from storage
     if (!currentProject || currentProject.id !== projectId) {
-       ("Current project doesn't match URL, refreshing from storage");
       refreshProjectFromStorage();
     }
   }, [projectId, currentProject, refreshProjectFromStorage]);
@@ -78,7 +75,6 @@ export default function ProjectAdminPromotersPage() {
     
     // If current project doesn't match URL project ID
     if (currentProject && currentProject.id !== projectId) {
-       ("Project ID mismatch - updating current project");
       
       // Update localStorage with the project ID from URL
       if (typeof window !== 'undefined') {
