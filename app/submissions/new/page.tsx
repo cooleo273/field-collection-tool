@@ -52,6 +52,7 @@ const formSchema = z.object({
     participant_count: z.coerce.number().min(1, "At least one participant is required"),
     key_issues: z.string().min(10, "Please provide more details about key issues discussed"),
     images: z.array(z.string()).min(1, "At least one photo is required"),
+    project_id: z.string().min(1, "Project is required"),
 })
 
 export default function NewSubmissionPage() {
@@ -63,6 +64,7 @@ export default function NewSubmissionPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [campaigns, setCampaigns] = useState<any[]>([])
     const [uploadedImageUrl, setUploadedImageUrl] = useState("")
+    const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -73,6 +75,7 @@ export default function NewSubmissionPage() {
             participant_count: 0,
             key_issues: "",
             images: [],
+            project_id: "",
         },
     })
 
@@ -100,6 +103,44 @@ export default function NewSubmissionPage() {
         loadData()
     }, [userProfile, toast, router])
 
+    useEffect(() => {
+        const loadProjects = async () => {
+            if (!userProfile) return;
+    
+            setIsLoading(true);
+            try {
+                // Fetch projects assigned to the user from project_promoter table
+                const { data: projects, error } = await supabase
+                    .from('project_promoters')
+                    .select('project_id, projects (id, name)') // Ensure correct relationship and column names
+                    .eq('user_id', userProfile.id);
+    
+                if (error) {
+                    console.error("Error fetching projects:", error);
+                    toast({
+                        title: "Error",
+                        description: "Failed to load projects. Please try again.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+    
+                setFilteredProjects(projects || []);
+            } catch (error) {
+                console.error("Error loading projects:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load projects. Please try again.",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+    
+        loadProjects();
+    }, [userProfile, toast]);
+
     const handleImageUpload = (url: string) => {
         const currentImages = form.getValues("images")
         form.setValue("images", [...currentImages, url])
@@ -114,7 +155,10 @@ export default function NewSubmissionPage() {
     }
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        if (!userProfile || !currentProject) {
+        console.log("onSubmit called with values:", values);
+        setIsSubmitting(true);
+        console.log("isSubmitting set to true");
+        if (!userProfile) {
             toast({
                 title: "Error",
                 description: "User profile or project context is missing.",
@@ -123,7 +167,16 @@ export default function NewSubmissionPage() {
             return;
         }
 
-        setIsSubmitting(true)
+        const timeout = setTimeout(() => {
+            console.error("Submission process is taking too long. Timing out.");
+            setIsSubmitting(false);
+            toast({
+                title: "Error",
+                description: "Submission process timed out. Please try again.",
+                variant: "destructive",
+            });
+        }, 30000); // 30 seconds timeout
+
         try {
             // Create the submission
             const submission = await createSubmission({
@@ -136,7 +189,7 @@ export default function NewSubmissionPage() {
                 submitted_by: userProfile.id,
                 submitted_at: new Date().toISOString(),
                 sync_status: "local",
-                project_id: currentProject.id, // Use project_id from ProjectContext
+                project_id: values.project_id, // Use project_id from ProjectContext
             })
 
             // Store the photo URLs in the submission_photos table
@@ -177,6 +230,7 @@ export default function NewSubmissionPage() {
                 variant: "destructive",
             })
         } finally {
+            clearTimeout(timeout);
             setIsSubmitting(false)
         }
     }
@@ -228,7 +282,7 @@ export default function NewSubmissionPage() {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                    {ACTIVITY_STREAM.map((group) => (
+                                                        {ACTIVITY_STREAM.map((group) => (
                                                             <SelectItem key={group} value={group}>
                                                                 {group}
                                                             </SelectItem>
@@ -294,6 +348,30 @@ export default function NewSubmissionPage() {
                                         )}
                                     />
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="project_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Project</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10">
+                                                        <SelectValue placeholder="Select a project" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {filteredProjects.map((project) => (
+                                                        <SelectItem key={project.project_id} value={project.project_id}>
+                                                            {project.projects.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
 
                             <div className="space-y-4 pt-2">

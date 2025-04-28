@@ -356,49 +356,74 @@ interface StatusDistributionChartProps {
 }
 
 function StatusDistributionChart({ data }: StatusDistributionChartProps) {
-  const total = data.reduce((sum, item) => sum + item.value, 0)
+  console.log("Rendering StatusDistributionChart with data:", data);
+
+  const transformedData = data.map(item => {
+    if (item.name === "submitted") {
+        return { ...item, name: "Pending" };
+    }
+    return item;
+  });
+
+  console.log("Transformed data for StatusDistributionChart:", transformedData);
+
+  const total = transformedData.reduce((sum, item) => sum + item.value, 0);
+
+  console.log("Total value:", total);
+  transformedData.forEach((item, index, arr) => {
+    const percentage = item.value / total;
+    const degrees = percentage * 360;
+    const prevPercentage = arr
+      .slice(0, index)
+      .reduce((sum, prevItem) => sum + (prevItem.value / total), 0);
+    const prevDegrees = prevPercentage * 360;
+
+    console.log(`Item: ${item.name}, Value: ${item.value}, Percentage: ${percentage}, Degrees: ${degrees}, Previous Degrees: ${prevDegrees}`);
+  });
+
+  if (total === 0) {
+    console.warn("No data to display in StatusDistributionChart.");
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground">
+        <span>No data available</span>
+      </div>
+    );
+  }
   
-  return (
-    <div className="h-full w-full flex justify-center items-center">
-      <div className="w-48 h-48 relative rounded-full overflow-hidden">
-        {data.map((item, index, arr) => {
-          // Calculate the percentage and angle for this segment
-          const percentage = item.value / total
-          const degrees = percentage * 360
-          
-          // Calculate the cumulative percentage up to this point
-          const prevPercentage = arr
+  const gradientSegments = transformedData
+    .filter(item => item.value > 0)
+    .map((item, index, arr) => {
+        const percentage = item.value / total;
+        const degrees = percentage * 360;
+        const prevPercentage = arr
             .slice(0, index)
-            .reduce((sum, prevItem) => sum + (prevItem.value / total), 0)
-          const prevDegrees = prevPercentage * 360
-          
-          return item.value > 0 ? (
-            <div 
-              key={item.name}
-              className="absolute inset-0"
-              style={{
-                background: item.color,
-                clipPath: `conic-gradient(from ${prevDegrees}deg, transparent 0deg, currentColor ${degrees}deg, transparent ${degrees}deg)`,
-                color: item.color
-              }}
-              title={`${item.name}: ${item.value} (${Math.round(percentage * 100)}%)`}
-            />
-          ) : null
-        })}
-      </div>
-      <div className="ml-8 space-y-2">
-        {data.filter(item => item.value > 0).map(item => (
-          <div key={item.name} className="flex items-center">
-            <div 
-              className="w-3 h-3 rounded-full mr-2" 
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-sm">{item.name}: {item.value}</span>
-          </div>
-        ))}
-      </div>
+            .reduce((sum, prevItem) => sum + (prevItem.value / total), 0);
+        const prevDegrees = prevPercentage * 360;
+
+        return `${item.color} ${prevDegrees}deg ${prevDegrees + degrees}deg`;
+    })
+    .join(", ");
+
+const chartStyle = {
+    background: `conic-gradient(${gradientSegments})`,
+};
+
+return (
+    <div className="h-full w-full flex justify-center items-center">
+        <div className="w-48 h-48 relative rounded-full" style={chartStyle}></div>
+        <div className="ml-8 space-y-2">
+            {transformedData.filter(item => item.value > 0).map(item => (
+                <div key={item.name} className="flex items-center">
+                    <div 
+                        className="w-3 h-3 rounded-full mr-2" 
+                        style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm">{item.name}: {item.value}</span>
+                </div>
+            ))}
+        </div>
     </div>
-  )
+);
 }
 
 interface CampaignPerformanceChartProps {
@@ -431,8 +456,8 @@ function CampaignPerformanceChart({ data, showLabels = false }: CampaignPerforma
         </div>
       ))}
     </div>
-  )
-}
+  );
+} // Ensure this closing brace is added
 
 // Helper function to get the right color class based on submission status
 function getStatusColor(status: string) {

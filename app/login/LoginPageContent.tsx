@@ -4,7 +4,6 @@ import { useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { LoginForm } from "@/components/login-form"
 import { useAuth } from "@/contexts/auth-context"
-import { Card } from "@/components/ui/card"
 
 export default function LoginPageContent() {
   const router = useRouter()
