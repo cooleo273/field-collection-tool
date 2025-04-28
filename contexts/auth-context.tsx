@@ -98,7 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to initialize auth state
   const initAuth = async () => {
     try {
-       ("Initializing auth state...")
       setIsLoading(true)
 
       // Get current session
@@ -121,7 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Failed to fetch user profile")
         }
       } else {
-         ("No session found")
         setUser(null)
         setUserProfile(null)
       }

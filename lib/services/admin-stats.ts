@@ -155,7 +155,7 @@ function calculateSubmissionTrends(submissions: any[]): SubmissionTrendData[] {
 // Helper function to calculate status distribution
 function calculateStatusDistribution(submissions: any[]): StatusDistributionData[] {
   const statusCounts = {
-    pending: 0,
+    submitted: 0,
     approved: 0,
     rejected: 0,
     other: 0
@@ -163,7 +163,7 @@ function calculateStatusDistribution(submissions: any[]): StatusDistributionData
   
   submissions.forEach(submission => {
     if (submission.status === 'submitted') {
-      statusCounts.pending++
+      statusCounts.submitted++
     } else if (submission.status === 'approved') {
       statusCounts.approved++
     } else if (submission.status === 'rejected') {
@@ -174,7 +174,7 @@ function calculateStatusDistribution(submissions: any[]): StatusDistributionData
   })
   
   return [
-    { name: 'Pending', value: statusCounts.pending, color: '#facc15' },
+    { name: 'Pending', value: statusCounts.submitted, color: '#facc15' },
     { name: 'Approved', value: statusCounts.approved, color: '#22c55e' },
     { name: 'Rejected', value: statusCounts.rejected, color: '#ef4444' },
     { name: 'Other', value: statusCounts.other, color: '#3b82f6' }
