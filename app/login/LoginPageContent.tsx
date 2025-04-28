@@ -21,7 +21,7 @@ export default function LoginPageContent() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-background via-background/95 to-muted/50">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+      <div className="absolute inset-0 bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
       
       {/* Main Content */}
       <div className="container relative min-h-screen flex items-center justify-center p-4">
