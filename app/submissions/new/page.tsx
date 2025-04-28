@@ -155,9 +155,7 @@ export default function NewSubmissionPage() {
     }
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        console.log("onSubmit called with values:", values);
         setIsSubmitting(true);
-        console.log("isSubmitting set to true");
         if (!userProfile) {
             toast({
                 title: "Error",

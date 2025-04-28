@@ -356,7 +356,6 @@ interface StatusDistributionChartProps {
 }
 
 function StatusDistributionChart({ data }: StatusDistributionChartProps) {
-  console.log("Rendering StatusDistributionChart with data:", data);
 
   const transformedData = data.map(item => {
     if (item.name === "submitted") {
@@ -365,11 +364,8 @@ function StatusDistributionChart({ data }: StatusDistributionChartProps) {
     return item;
   });
 
-  console.log("Transformed data for StatusDistributionChart:", transformedData);
-
   const total = transformedData.reduce((sum, item) => sum + item.value, 0);
 
-  console.log("Total value:", total);
   transformedData.forEach((item, index, arr) => {
     const percentage = item.value / total;
     const degrees = percentage * 360;
@@ -378,7 +374,6 @@ function StatusDistributionChart({ data }: StatusDistributionChartProps) {
       .reduce((sum, prevItem) => sum + (prevItem.value / total), 0);
     const prevDegrees = prevPercentage * 360;
 
-    console.log(`Item: ${item.name}, Value: ${item.value}, Percentage: ${percentage}, Degrees: ${degrees}, Previous Degrees: ${prevDegrees}`);
   });
 
   if (total === 0) {

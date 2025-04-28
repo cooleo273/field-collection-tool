@@ -143,10 +143,7 @@ export async function createSubmission(
   >,
   photoUrls?: string[]
 ) {
-  console.log("Starting createSubmission function");
-  console.log("Submission data received:", submission);
   if (photoUrls) {
-    console.log("Photo URLs received:", photoUrls);
   } else {
     console.log("No photo URLs provided.");
   }
@@ -170,10 +167,8 @@ export async function createSubmission(
     throw error;
   }
 
-  console.log("Submission created successfully:", data);
 
   if (photoUrls && photoUrls.length > 0 && data) {
-    console.log("Storing photo URLs for submission:", photoUrls);
 
     const photoEntries = photoUrls.map((url) => ({
       submission_id: data.id,
