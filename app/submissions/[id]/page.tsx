@@ -21,6 +21,7 @@ import { getSubmissionPhotos } from "@/lib/services/submission_photos.service"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { getLocationForPromoter } from "@/lib/services/repositories/promoter-location-service"
 
 // Match the database schema
 interface Submission {
@@ -39,6 +40,9 @@ interface Submission {
   sync_status: string
   created_at: string
   updated_at: string
+  pre_session_dfs_level: string,
+  post_session_dfs_improvement: string
+  estimated_dfs_adoption_count: number
   // Join data
   campaigns?: { name: string }
   locations?: { name: string }
@@ -114,28 +118,30 @@ export default function SubmissionDetailsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "draft":
-        return <Badge className="px-3 py-1 text-sm font-medium" variant="outline">Draft</Badge>
+        return <Badge variant="outline">Draft</Badge> // Keep outline for draft
       case "submitted":
-        return <Badge className="px-3 py-1 text-sm font-medium bg-orange-300" variant="secondary">Submitted</Badge>
+        // Use a consistent blue theme for submitted
+        return <Badge className="bg-orange-300 text-white hover:bg-orange-200 border border-orange-200">Submitted</Badge>
       case "approved":
-        return <Badge className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border border-green-200">Approved</Badge>
       case "rejected":
-        return <Badge className="px-3 py-1 text-sm font-medium" variant="destructive">Rejected</Badge>
+        return <Badge variant="destructive">Rejected</Badge>
       default:
-        return <Badge className="px-3 py-1 text-sm font-medium" variant="outline">{status}</Badge>
+        return <Badge variant="secondary">{status}</Badge> // Use secondary for unknown/other states
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "approved":
-        return <CheckCircle className="h-12 w-12 text-green-500" />
+        return <CheckCircle className="h-10 w-10 text-green-500" /> // Slightly smaller icon
       case "rejected":
-        return <XCircle className="h-12 w-12 text-red-500" />
+        return <XCircle className="h-10 w-10 text-red-500" />
       case "submitted":
-        return <Clock className="h-12 w-12 text-orange-300" />
+        return <Clock className="h-10 w-10 text-orange-300" /> // Match submitted badge color
       default:
-        return <AlertTriangle className="h-12 w-12 text-amber-500" />
+        // Use a neutral or warning icon for default/draft
+        return <FileText className="h-10 w-10 text-gray-500" />
     }
   }
 
@@ -202,6 +208,26 @@ export default function SubmissionDetailsPage() {
 
     fetchParticipants();
   }, [submission?.id]);
+
+  // Fetch the location dynamically using the promoter-location-service
+  useEffect(() => {
+    const fetchLocation = async () => {
+      if (submission?.submitted_by) {
+        const location = await getLocationForPromoter(submission.submitted_by);
+        if (location) {
+          setSubmission((prev) => {
+            if (!prev) return prev; // Ensure prev is not null
+            return {
+              ...prev,
+              locations: { name: location.name },
+            };
+          });
+        }
+      }
+    };
+
+    fetchLocation();
+  }, [submission?.submitted_by]);
 
   const handleAddParticipant = async () => {
     try {
@@ -294,7 +320,7 @@ export default function SubmissionDetailsPage() {
         <div className="flex h-full items-center justify-center">
           <LoadingSpinner />
         </div>
-      </DashboardLayout>
+        </DashboardLayout>
     )
   }
 
@@ -309,12 +335,12 @@ export default function SubmissionDetailsPage() {
           <p className="text-muted-foreground mb-6 text-center max-w-md">
             The submission you're looking for doesn't exist or you don't have permission to view it.
           </p>
-          <Button onClick={() => router.push("/submissions")}>
+          <Button onClick={() => router.push("/dashboard")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Submissions
           </Button>
         </div>
-      </DashboardLayout>
+        </DashboardLayout>
     )
   }
 
@@ -354,13 +380,14 @@ export default function SubmissionDetailsPage() {
         <div className="grid gap-6 md:grid-cols-3">
           <div className="md:col-span-2 space-y-6">
             <Card className="overflow-hidden border-2 shadow-sm">
+              {/* Display the location and specific location of the submission */}
               <CardHeader className="pb-3 bg-muted/30">
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-xl">{submission?.activity_stream}</CardTitle>
                     <CardDescription className="mt-1 flex items-center">
                       <Tag className="h-4 w-4 mr-1" />
-                      {submission?.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission?.specific_location || "Unknown location"}
+                      {submission?.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission?.specific_location || "Unknown specific location"}, {submission?.locations?.name || "Unknown location"}
                     </CardDescription>
                   </div>
                   {getStatusBadge(submission?.status)}
@@ -373,6 +400,31 @@ export default function SubmissionDetailsPage() {
                     <p className="text-sm leading-relaxed">{submission?.key_issues || "No key issues recorded"}</p>
                   </div>
                 </div>
+
+                {/* --- Start of Edit --- */}
+                {/* Group DFS Metrics */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">DFS Session Impact</h3>
+                  {/* Use a grid to display metrics side-by-side */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Pre-session Level */}
+                    <div className="bg-muted/20 p-4 rounded-lg border"> {/* Added border */}
+                      <p className="text-xs text-muted-foreground mb-1">Pre-Session Level</p> {/* Smaller label */}
+                      <p className="text-sm font-medium">{submission?.pre_session_dfs_level || "N/A"}</p> {/* Value */}
+                    </div>
+                    {/* Post-session Improvement */}
+                    <div className="bg-muted/20 p-4 rounded-lg border"> {/* Added border */}
+                      <p className="text-xs text-muted-foreground mb-1">Post-Session Improvement</p> {/* Smaller label */}
+                      <p className="text-sm font-medium">{submission?.post_session_dfs_improvement || "N/A"}</p> {/* Value */}
+                    </div>
+                    {/* Estimated Adoption */}
+                    <div className="bg-muted/20 p-4 rounded-lg border"> {/* Added border */}
+                      <p className="text-xs text-muted-foreground mb-1">Est. Adoption Count</p> {/* Smaller label */}
+                      <p className="text-sm font-medium">{submission?.estimated_dfs_adoption_count ?? "N/A"}</p> {/* Value, use ?? for numbers */}
+                    </div>
+                  </div>
+                </div>
+                {/* --- End of Edit --- */}
 
                 <Separator className="my-6" />
 
@@ -474,7 +526,7 @@ export default function SubmissionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Location</p>
-                      <p className="text-sm text-muted-foreground">{submission?.locations?.name || "Unknown"}</p>
+                      <p className="text-sm text-muted-foreground">{submission?.locations?.name || "Unknown"}, {submission?.specific_location || "Unknown"}</p>
                     </div>
                   </li>
                   <li className="flex items-start">
@@ -515,6 +567,9 @@ export default function SubmissionDetailsPage() {
           <Card className="border-2 shadow-lg rounded-lg overflow-hidden">
             <CardHeader className="pb-4 bg-muted/30">
               <CardTitle className="text-lg font-semibold text-primary">Participants</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {`${submittedParticipants}/${submission?.participant_count || 0} participants submitted`}
+              </p>
             </CardHeader>
             <CardContent>
               {isMobile ? (
@@ -607,6 +662,7 @@ export default function SubmissionDetailsPage() {
                           variant="default"
                           className="w-full bg-primary text-white hover:bg-primary-dark focus:ring-2 focus:ring-primary focus:outline-none"
                           onClick={handleParticipantSubmit}
+                          disabled={submittedParticipants >= (submission?.participant_count || 0)}
                         >
                           Add
                         </Button>
@@ -681,7 +737,7 @@ export default function SubmissionDetailsPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+      </DashboardLayout>
   )
 }
 

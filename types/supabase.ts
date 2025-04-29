@@ -41,38 +41,6 @@ export interface Database {
           updated_at?: string
         }
       }
-      campaigns: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          start_date: string
-          end_date: string | null
-          status: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          start_date: string
-          end_date?: string | null
-          status?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          start_date?: string
-          end_date?: string | null
-          status?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
       locations: {
         Row: {
           id: string
@@ -146,6 +114,9 @@ export interface Database {
           created_at: string
           updated_at: string
           project_id: string // Added project_id field
+          pre_session_dfs_level: string | null
+          post_session_dfs_improvement: string | null
+          estimated_dfs_adoption_count: number | null
         }
         Insert: {
           id?: string
@@ -164,6 +135,10 @@ export interface Database {
           created_at?: string
           updated_at?: string
           project_id: string // Added project_id field
+          pre_session_dfs_level: string | null
+          post_session_dfs_improvement: string | null
+          estimated_dfs_adoption_count: number | null
+
         }
         Update: {
           id?: string
@@ -182,6 +157,9 @@ export interface Database {
           created_at?: string
           updated_at?: string
           project_id?: string // Added project_id field
+          pre_session_dfs_level: string | null
+          post_session_dfs_improvement: string | null
+          estimated_dfs_adoption_count: number | null
         }
       }
     }
