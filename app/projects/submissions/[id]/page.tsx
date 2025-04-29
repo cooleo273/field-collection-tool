@@ -327,7 +327,7 @@ export default function SubmissionDetailsPage() {
           <p className="text-muted-foreground mb-6 text-center max-w-md">
             The submission you're looking for doesn't exist or you don't have permission to view it.
           </p>
-          <Button onClick={() => router.push("/dashboard")}>
+          <Button onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Submissions
           </Button>
@@ -339,7 +339,7 @@ export default function SubmissionDetailsPage() {
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b">
           <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/submissions")} className="mr-4">
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="mr-4">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
@@ -353,7 +353,7 @@ export default function SubmissionDetailsPage() {
             {submission.status !== "approved" && (
               <Button
                 variant="outline"
-                onClick={() => router.push(`/submissions/edit/${submission?.id}`)}
+                onClick={() => router.push(`/projects/submissions/edit/${submission?.id}`)}
               >
                 Edit Submission
               </Button>

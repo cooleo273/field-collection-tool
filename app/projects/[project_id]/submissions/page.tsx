@@ -85,6 +85,9 @@ export default function ProjectAdminSubmissionsPage() {
           <h1 className="page-title">Submissions</h1>
           <p className="page-description">Review and manage field data submissions</p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => router.push(`/projects/submissions/new`)}>
+          New Submission
+        </Button>
         <Button variant="outline" size="sm" onClick={loadSubmissions}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
@@ -93,7 +96,7 @@ export default function ProjectAdminSubmissionsPage() {
 
       <Tabs defaultValue="submitted">
         <TabsList className="mb-4">
-          <TabsTrigger value="pending">Pending Review</TabsTrigger>
+          <TabsTrigger value="submitted">Pending Review</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
           <TabsTrigger value="all">All Submissions</TabsTrigger>
