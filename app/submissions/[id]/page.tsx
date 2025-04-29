@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag } from "lucide-react"
+import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
 import { getSupabaseClient } from "@/lib/services/client"
@@ -18,6 +18,9 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getParticipantsCountBySubmissionId } from "@/lib/services/participants"
 import { getSubmissionPhotos } from "@/lib/services/submission_photos.service"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // Match the database schema
 interface Submission {
@@ -55,6 +58,11 @@ export default function SubmissionDetailsPage() {
   const [participantPhoneNumber, setParticipantPhoneNumber] = useState("")
   const [participantGender, setParticipantGender] = useState("")
   const [submittedParticipants, setSubmittedParticipants] = useState<number>(0)
+  const [submittedParticipantsList, setSubmittedParticipantsList] = useState<any[]>([])
+  const [showAddParticipantModal, setShowAddParticipantModal] = useState(false)
+
+  // Ensure `useMobile` is called unconditionally to maintain consistent hook order
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!userProfile && !loading) {
@@ -108,7 +116,7 @@ export default function SubmissionDetailsPage() {
       case "draft":
         return <Badge className="px-3 py-1 text-sm font-medium" variant="outline">Draft</Badge>
       case "submitted":
-        return <Badge className="px-3 py-1 text-sm font-medium" variant="secondary">Submitted</Badge>
+        return <Badge className="px-3 py-1 text-sm font-medium bg-orange-300" variant="secondary">Submitted</Badge>
       case "approved":
         return <Badge className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>
       case "rejected":
@@ -125,7 +133,7 @@ export default function SubmissionDetailsPage() {
       case "rejected":
         return <XCircle className="h-12 w-12 text-red-500" />
       case "submitted":
-        return <Clock className="h-12 w-12 text-blue-500" />
+        return <Clock className="h-12 w-12 text-orange-300" />
       default:
         return <AlertTriangle className="h-12 w-12 text-amber-500" />
     }
@@ -133,14 +141,14 @@ export default function SubmissionDetailsPage() {
 
   // Load submission photos
   const [photos, setPhotos] = useState<string[]>([])
-  
+
   useEffect(() => {
     if (submission?.id) {
       const fetchPhotos = async () => {
         try {
           // Get photos from the submission_photos table
           const photoData = await getSubmissionPhotos(submission.id)
-          
+
           if (photoData && photoData.length > 0) {
             // Extract the photo URLs
             setPhotos(photoData.map(item => item?.photo_url))
@@ -149,7 +157,7 @@ export default function SubmissionDetailsPage() {
             const { data: storageData, error: storageError } = await supabase.storage
               .from("submission-photos")
               .list(`${submission.id}`)
-              
+
             if (!storageError && storageData && storageData.length > 0) {
               const photoUrls = storageData
                 .filter(item => !item.id.endsWith('/')) // Filter out folders
@@ -166,10 +174,34 @@ export default function SubmissionDetailsPage() {
           console.error("Error processing photos:", err)
         }
       }
-      
+
       fetchPhotos()
     }
   }, [submission, supabase])
+
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      if (!submission?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("participants")
+          .select("name, age, phone_number, gender")
+          .eq("submission_id", submission.id);
+
+        if (error) {
+          console.error("Error fetching participants:", error);
+          return;
+        }
+
+        setSubmittedParticipantsList(data || []);
+      } catch (error) {
+        console.error("Error loading participants:", error);
+      }
+    };
+
+    fetchParticipants();
+  }, [submission?.id]);
 
   const handleAddParticipant = async () => {
     try {
@@ -218,12 +250,41 @@ export default function SubmissionDetailsPage() {
 
       const participantCount = await getParticipantsCountBySubmissionId(submission?.id || "")
       setSubmittedParticipants(participantCount)
+      setSubmittedParticipantsList([...submittedParticipantsList, { name: participantName, age: participantAge, phone_number: participantPhoneNumber, gender: participantGender }])
       setParticipantName("")
       setParticipantAge("")
       setParticipantPhoneNumber("")
       setParticipantGender("")
+      setShowAddParticipantModal(false)
     } catch (error) {
       console.error("Error adding participant:", error)
+    }
+  }
+
+  const handleRemoveParticipant = async (index: number) => {
+    const participant = submittedParticipantsList[index]
+    try {
+      const { error } = await supabase
+        .from("participants")
+        .delete()
+        .eq("submission_id", submission?.id)
+        .eq("name", participant.name)
+        .eq("age", participant.age)
+        .eq("phone_number", participant.phone_number)
+        .eq("gender", participant.gender)
+
+      if (error) {
+        console.error("Error removing participant:", error)
+        return
+      }
+
+      const updatedList = [...submittedParticipantsList]
+      updatedList.splice(index, 1)
+      setSubmittedParticipantsList(updatedList)
+      const participantCount = await getParticipantsCountBySubmissionId(submission?.id || "")
+      setSubmittedParticipants(participantCount)
+    } catch (error) {
+      console.error("Error removing participant:", error)
     }
   }
 
@@ -332,12 +393,12 @@ export default function SubmissionDetailsPage() {
 
                     {photos.length === 0 && (
                       <div className="col-span-full flex flex-col items-center justify-center p-8 bg-muted/20 rounded-lg border border-dashed">
-                        <Image 
-                          src="/placeholder.svg" 
-                          alt="No photos" 
-                          width={80} 
-                          height={80} 
-                          className="opacity-50 mb-3" 
+                        <Image
+                          src="/placeholder.svg"
+                          alt="No photos"
+                          width={80}
+                          height={80}
+                          className="opacity-50 mb-3"
                         />
                         <p className="text-sm text-muted-foreground">No photos uploaded for this submission</p>
                       </div>
@@ -427,15 +488,6 @@ export default function SubmissionDetailsPage() {
                   </li>
                   <li className="flex items-start">
                     <div className="bg-primary/10 p-2 rounded-full mr-3">
-                      <Tag className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Campaign</p>
-                      <p className="text-sm text-muted-foreground">{submission?.campaigns?.name || "Unknown"}</p>
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="bg-primary/10 p-2 rounded-full mr-3">
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -460,72 +512,176 @@ export default function SubmissionDetailsPage() {
           </div>
         </div>
         <div className="space-y-6">
-          <Card className="border-2 shadow-sm">
-            <CardHeader className="pb-3 bg-muted/30">
-              <CardTitle className="text-lg">Add Participants</CardTitle>
+          <Card className="border-2 shadow-lg rounded-lg overflow-hidden">
+            <CardHeader className="pb-4 bg-muted/30">
+              <CardTitle className="text-lg font-semibold text-primary">Participants</CardTitle>
             </CardHeader>
             <CardContent>
-              {submittedParticipants < submission.participant_count ? (
-                <form onSubmit={handleParticipantSubmit} className="space-y-4">
-                  <Input
-                    type="text"
-                    placeholder="Enter participant name"
-                    value={participantName}
-                    onChange={(e) => setParticipantName(e.target.value)}
-                    className="w-full"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Enter participant age"
-                    value={participantAge}
-                    onChange={(e) => setParticipantAge(e.target.value)}
-                    className="w-full"
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Enter phone number"
-                    value={participantPhoneNumber}
-                    onChange={(e) => setParticipantPhoneNumber(e.target.value)}
-                    className="w-full"
-                  />
-                  <Select onValueChange={setParticipantGender} value={participantGender}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button type="submit" variant="default" className="w-full">
-                    Add Participant
-                  </Button>
-                </form>
+              {isMobile ? (
+                <div>
+                  {submittedParticipantsList.map((participant: { name: string; age: number; phone_number: string; gender: string }, index: number) => (
+                    <div key={index} className="p-4 border rounded-lg shadow-sm bg-white">
+                      <p className="text-sm font-medium">Name: {participant.name}</p>
+                      <p className="text-sm text-muted-foreground">Age: {participant.age}</p>
+                      <p className="text-sm text-muted-foreground">Phone: {participant.phone_number}</p>
+                      <p className="text-sm text-muted-foreground">Gender: {participant.gender}</p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveParticipant(index)}
+                        className="mt-2"
+                      >
+                        <Trash className="h-5 w-5 text-red-500 hover:text-red-700" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  All participants have been added.
-                </p>
+                <Table className="w-full border-collapse border border-gray-300 rounded-lg">
+                  <TableHeader className="bg-gray-100">
+                    <TableRow>
+                      <TableHead className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</TableHead>
+                      <TableHead className="px-4 py-2 text-left text-sm font-medium text-gray-700">Age</TableHead>
+                      <TableHead className="px-4 py-2 text-left text-sm font-medium text-gray-700">Phone Number</TableHead>
+                      <TableHead className="px-4 py-2 text-left text-sm font-medium text-gray-700">Gender</TableHead>
+                      <TableHead className="px-4 py-2 text-left text-sm font-medium text-gray-700">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {submittedParticipantsList.map((participant: { name: string; age: number; phone_number: string; gender: string }, index: number) => (
+                      <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                        <TableCell className="px-4 py-2 text-sm text-gray-800">{participant.name}</TableCell>
+                        <TableCell className="px-4 py-2 text-sm text-gray-800">{participant.age}</TableCell>
+                        <TableCell className="px-4 py-2 text-sm text-gray-800">{participant.phone_number}</TableCell>
+                        <TableCell className="px-4 py-2 text-sm text-gray-800">{participant.gender}</TableCell>
+                        <TableCell className="px-4 py-2 text-sm text-gray-800">
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveParticipant(index)}>
+                            <Trash className="h-5 w-5 text-red-500 hover:text-red-700" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell className="px-4 py-2">
+                        <Input
+                          type="text"
+                          placeholder="Enter participant name"
+                          value={participantName}
+                          onChange={(e) => setParticipantName(e.target.value)}
+                          className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                        />
+                      </TableCell>
+                      <TableCell className="px-4 py-2">
+                        <Input
+                          type="number"
+                          placeholder="Enter participant age"
+                          value={participantAge}
+                          onChange={(e) => setParticipantAge(e.target.value)}
+                          className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                        />
+                      </TableCell>
+                      <TableCell className="px-4 py-2">
+                        <Input
+                          type="text"
+                          placeholder="Enter phone number"
+                          value={participantPhoneNumber}
+                          onChange={(e) => setParticipantPhoneNumber(e.target.value)}
+                          className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                        />
+                      </TableCell>
+                      <TableCell className="px-4 py-2">
+                        <Select onValueChange={setParticipantGender} value={participantGender}>
+                          <SelectTrigger className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="px-4 py-2">
+                        <Button
+                          type="button"
+                          variant="default"
+                          className="w-full bg-primary text-white hover:bg-primary-dark focus:ring-2 focus:ring-primary focus:outline-none"
+                          onClick={handleParticipantSubmit}
+                        >
+                          Add
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
               )}
+              <CardFooter className="bg-gray-50 py-4 flex justify-end md:hidden">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="default"
+                      className="bg-primary text-white hover:bg-primary-dark focus:ring-2 focus:ring-primary focus:outline-none"
+                    >
+                      Add Participant
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add Participant</DialogTitle>
+                      <DialogDescription>
+                        Fill in the details below to add a new participant.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleParticipantSubmit} className="space-y-4">
+                      <Input
+                        type="text"
+                        placeholder="Enter participant name"
+                        value={participantName}
+                        onChange={(e) => setParticipantName(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Enter participant age"
+                        value={participantAge}
+                        onChange={(e) => setParticipantAge(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                      />
+                      <Input
+                        type="text"
+                        placeholder="Enter phone number"
+                        value={participantPhoneNumber}
+                        onChange={(e) => setParticipantPhoneNumber(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
+                      />
+                      <Select onValueChange={setParticipantGender} value={participantGender}>
+                        <SelectTrigger className="w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:outline-none">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <DialogFooter>
+                        <Button
+                          type="submit"
+                          variant="default"
+                          className="w-full bg-primary text-white hover:bg-primary-dark focus:ring-2 focus:ring-primary focus:outline-none"
+                        >
+                          Add
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardFooter>
             </CardContent>
-            <CardFooter>
-              <p className="text-sm text-muted-foreground">
-                {submittedParticipants}/{submission?.participant_count} participants added.
-              </p>
-            </CardFooter>
           </Card>
         </div>
-        <div className="flex justify-end">
-  <Button
-    onClick={() => router.push(`/submissions/${submission?.id}/participants`)}
-    variant="default"
-  >
-    View Participants
-  </Button>
-</div>
-        </div>
-      
-    </DashboardLayout>  
+      </div>
+    </DashboardLayout>
   )
 }
 
