@@ -62,7 +62,7 @@ const ACTIVITY_STREAM = [
 // Form schema
 const formSchema = z.object({
   activity_stream: z.string().min(1, "Campaign is required"),
-  location: z.string().min(1, "Location is required"),
+  specific_location: z.string().min(1, "Location is required"),
   community_group_type: z.string().min(1, "Community group type is required"),
   participant_count: z.coerce
     .number()
@@ -90,7 +90,7 @@ export default function EditSubmissionPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       activity_stream: "",
-      location: "",
+      specific_location: "",
       community_group_type: "",
       participant_count: 0,
       key_issues: "",
@@ -144,7 +144,7 @@ export default function EditSubmissionPage() {
 
         // Set form values
         form.setValue("activity_stream", submissionData.activity_stream);
-        form.setValue("location", submissionData.location);
+        form.setValue("specific_location", submissionData.specific_location);
         form.setValue(
           "community_group_type",
           submissionData.community_group_type
@@ -186,7 +186,7 @@ export default function EditSubmissionPage() {
       // Update the submission
       const updatedSubmission = await updateSubmission(submission.id, {
         activity_stream: values.activity_stream,
-        location: values.location,
+        specific_location: values.specific_location,
         community_group_type: values.community_group_type,
         participant_count: values.participant_count,
         key_issues: values.key_issues,
@@ -336,10 +336,10 @@ export default function EditSubmissionPage() {
 
                     <FormField
                       control={form.control}
-                      name="location"
+                      name="specific_location"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Location</FormLabel>
+                          <FormLabel>Specific Location</FormLabel>
                           <FormControl>
                             <Input type="text" className="h-10" {...field} />
                           </FormControl>

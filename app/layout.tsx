@@ -29,10 +29,10 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Akofada BCC'
   },
-  icons: {
-    icon: '../public/Main_logo.svg',
-    apple: '../public/Main_logo.svg'
-  }
+  // icons: {
+  //   icon: '../public/Main_logo.svg',
+  //   apple: '../public/Main_logo.svg'
+  // }
 }
 
 export default function RootLayout({
