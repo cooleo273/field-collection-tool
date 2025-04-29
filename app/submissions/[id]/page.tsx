@@ -26,7 +26,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 interface Submission {
   id: string
   activity_stream: string
-  location: string
+  specific_location: string
   community_group_type: string
   participant_count: number
   key_issues: string
@@ -360,7 +360,7 @@ export default function SubmissionDetailsPage() {
                     <CardTitle className="text-xl">{submission?.activity_stream}</CardTitle>
                     <CardDescription className="mt-1 flex items-center">
                       <Tag className="h-4 w-4 mr-1" />
-                      {submission?.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission?.location || "Unknown location"}
+                      {submission?.community_group_type} • <MapPin className="h-4 w-4 mx-1" /> {submission?.specific_location || "Unknown location"}
                     </CardDescription>
                   </div>
                   {getStatusBadge(submission?.status)}
