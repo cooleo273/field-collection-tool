@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getLocationForPromoter } from "@/lib/services/repositories/promoter-location-service"
+import { useToast } from "@/components/ui/use-toast"
 
 // Match the database schema
 interface Submission {
@@ -53,6 +54,7 @@ export default function SubmissionDetailsPage() {
   const [loading, setLoading] = useState(true)
   const { userProfile } = useAuth()
   const supabase = getSupabaseClient()
+  const { toast } = useToast()
 
   const [participantName, setParticipantName] = useState("")
   const [participantAge, setParticipantAge] = useState("")
@@ -245,10 +247,15 @@ export default function SubmissionDetailsPage() {
   }
 
   const handleParticipantSubmit = async (e: React.FormEvent) => {
+    console.log("handleParticipantSubmit called!"); // Add this line
     e.preventDefault()
 
     if (!participantName.trim() || !participantAge.trim() || !participantPhoneNumber.trim() || !participantGender.trim()) {
-      alert("All fields are required.")
+      toast({
+        title: "Missing information",
+        description: "All fields are required to add a participant.",
+        variant: "destructive"
+      })
       return
     }
 
@@ -266,6 +273,11 @@ export default function SubmissionDetailsPage() {
 
       if (error) {
         console.error("Error adding participant:", error)
+        toast({
+          title: "Error adding participant",
+          description: error.message || "There was a problem adding the participant.",
+          variant: "destructive"
+        })
         return
       }
 
@@ -277,8 +289,19 @@ export default function SubmissionDetailsPage() {
       setParticipantPhoneNumber("")
       setParticipantGender("")
       setShowAddParticipantModal(false)
+      
+      toast({
+        title: "Participant added",
+        description: `${participantName} has been successfully added to the submission.`,
+        variant: "default"
+      })
     } catch (error) {
       console.error("Error adding participant:", error)
+      toast({
+        title: "Error adding participant",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -296,6 +319,11 @@ export default function SubmissionDetailsPage() {
 
       if (error) {
         console.error("Error removing participant:", error)
+        toast({
+          title: "Error removing participant",
+          description: error.message || "There was a problem removing the participant.",
+          variant: "destructive"
+        })
         return
       }
 
@@ -304,8 +332,19 @@ export default function SubmissionDetailsPage() {
       setSubmittedParticipantsList(updatedList)
       const participantCount = await getParticipantsCountBySubmissionId(submission?.id || "")
       setSubmittedParticipants(participantCount)
+      
+      toast({
+        title: "Participant removed",
+        description: `${participant.name} has been successfully removed from the submission.`,
+        variant: "default"
+      })
     } catch (error) {
       console.error("Error removing participant:", error)
+      toast({
+        title: "Error removing participant",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -626,10 +665,10 @@ export default function SubmissionDetailsPage() {
                       </TableCell>
                       <TableCell className="px-4 py-2">
                         <Button
-                          type="button"
+                          type="button" // Ensure it's not type="submit" if not inside a <form>
                           variant="default"
                           className="w-full bg-primary text-white hover:bg-primary-dark focus:ring-2 focus:ring-primary focus:outline-none"
-                          onClick={handleParticipantSubmit}
+                          onClick={handleParticipantSubmit} // Verify this line
                           disabled={submittedParticipants >= (submission?.participant_count || 0)}
                         >
                           Add
@@ -690,14 +729,16 @@ export default function SubmissionDetailsPage() {
                       </Select>
                       <DialogFooter>
                         <Button
-                          type="submit"
+                          type="submit" // This should be type="submit" for the form
                           variant="default"
                           className="w-full bg-primary text-white hover:bg-primary-dark focus:ring-2 focus:ring-primary focus:outline-none"
+                          // No onClick needed here if type="submit" and onSubmit is on the form
+                          disabled={submittedParticipants >= (submission?.participant_count || 0)} 
                         >
                           Add
                         </Button>
                       </DialogFooter>
-                    </form>
+                    </form> {/* Ensure onSubmit is here */}
                   </DialogContent>
                 </Dialog>
               </CardFooter>

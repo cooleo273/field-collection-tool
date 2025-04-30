@@ -76,6 +76,10 @@
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+    --toast-bottom: 1rem; 
+--toast-right: auto; /* Override default right positioning */
+--toast-left: 50%; 
+--toast-transform: translateX(-50%);
   }
 }
 

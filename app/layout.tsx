@@ -5,6 +5,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/auth-context"
 import { ProjectProvider } from '@/contexts/project-context'
+import { Toaster } from "@/components/ui/toaster" // Make sure this import exists
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -41,22 +42,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="h-full">
-      <head>
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Akofada BCC" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        {/* <link rel="manifest" href="/manifest.json" /> */}
-      </head>
-      <body className={`${inter.className} app-container`}>
+    <html lang="en">
+      <body>
         <ThemeProvider attribute="class" defaultTheme="light">
           <AuthProvider>
             <div className="app-content safe-area-top safe-area-bottom">
               <ProjectProvider>
                 {children}
+                <Toaster /> {/* Ensure this is present */}
               </ProjectProvider>
             </div>
           </AuthProvider>

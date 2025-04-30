@@ -45,24 +45,21 @@ export interface Database {
         Row: {
           id: string
           name: string
-          type: "kebele" | "district" | "zone" | "region"
-          parent_id: string | null
+          type: "kebele" | "district" | "zone" | "region" | "town"
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          type: "kebele" | "district" | "zone" | "region"
-          parent_id?: string | null
+          type: "kebele" | "district" | "zone" | "region" | "town"
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          type?: "kebele" | "district" | "zone" | "region"
-          parent_id?: string | null
+          type?: "kebele" | "district" | "zone" | "region" | "town"
           created_at?: string
           updated_at?: string
         }
