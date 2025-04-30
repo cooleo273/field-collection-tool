@@ -596,11 +596,11 @@ export default function SubmissionDetailsPage() {
                 <CardContent>
                   <p className="text-red-700 italic">{submission?.review_notes}</p>
                 </CardContent>
-                <CardFooter className="border-t border-red-200 pt-4">
+                {/* <CardFooter className="border-t border-red-200 pt-4">
                   <Button variant="outline" className="w-full" onClick={() => router.push("/submissions/new")}>
                     Create New Submission
                   </Button>
-                </CardFooter>
+                </CardFooter> */}
               </Card>
             )}
           </div>
