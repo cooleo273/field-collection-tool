@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash } from "lucide-react"
+import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash, ThumbsUp, ThumbsDown } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
 import { getSupabaseClient } from "@/lib/services/client"
@@ -20,9 +20,10 @@ import { getParticipantsCountBySubmissionId } from "@/lib/services/participants"
 import { getSubmissionPhotos } from "@/lib/services/submission_photos.service"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getLocationForPromoter } from "@/lib/services/repositories/promoter-location-service"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 // Match the database schema
 interface Submission {
@@ -47,6 +48,7 @@ interface Submission {
   users?: { name: string, email: string }
 }
 
+
 export default function SubmissionDetailsPage() {
   const router = useRouter()
   const params = useParams()
@@ -64,7 +66,58 @@ export default function SubmissionDetailsPage() {
   const [submittedParticipantsList, setSubmittedParticipantsList] = useState<any[]>([])
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false)
 
-  // Ensure `useMobile` is called unconditionally to maintain consistent hook order
+  // State for rejection dialog
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
+  const [rejectionNote, setRejectionNote] = useState("")
+
+  const handleUpdateStatus = async (newStatus: "approved" | "rejected", note?: string) => {
+    if (!submission || !userProfile) return; // Guard clause
+  
+    setLoading(true); // Indicate loading state
+    try {
+      const updateData: Partial<Submission> = {
+        status: newStatus,
+        reviewed_by: userProfile.id, // Assuming userProfile has an 'id' field
+        reviewed_at: new Date().toISOString(),
+        review_notes: newStatus === "rejected" ? note : null, // Add note only if rejecting
+      };
+  
+      const { error } = await supabase
+        .from("submissions")
+        .update(updateData)
+        .eq("id", submission.id);
+  
+      if (error) {
+        console.error(`Error ${newStatus === 'approved' ? 'approving' : 'rejecting'} submission:`, error);
+        toast({
+          title: `Failed to ${newStatus === 'approved' ? 'Approve' : 'Reject'}`,
+          description: error.message || "An error occurred while updating the status.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: `Submission ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
+          description: `The submission has been successfully ${newStatus}.`,
+          variant: "default", // Use default for success
+        });
+        // Reload submission data to reflect changes
+        await loadSubmission(submission.id); 
+        setIsRejectDialogOpen(false); // Close dialog if open
+        setRejectionNote(""); // Clear rejection note
+      }
+    } catch (error: any) {
+      console.error("Error updating submission status:", error);
+      toast({
+        title: "Update Error",
+        description: error?.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false); // Stop loading indicator
+    }
+  };
+  
+
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -80,7 +133,9 @@ export default function SubmissionDetailsPage() {
     }
   }, [params.id, router, userProfile, loading])
 
+
   const loadSubmission = async (id: string) => {
+    // setLoading(true); // Consider adding this if needed
     try {
       const { data, error } = await supabase
         .from("submissions")
@@ -93,13 +148,25 @@ export default function SubmissionDetailsPage() {
 
       if (error) {
         console.error("Error fetching submission:", error)
-        router.push("/submissions")
+        toast({ // Added toast for fetch error
+          title: "Error Fetching Submission",
+          description: error.message || "Could not load submission details.",
+          variant: "destructive",
+        })
+        setSubmission(null) // Set submission to null on error
+        // router.push("/submissions") // Avoid automatic redirect on error
         return
       }
 
       setSubmission(data)
-    } catch (error) {
+    } catch (error: any) { // Catch block typed
       console.error("Error loading submission:", error)
+      toast({
+        title: "Error Loading Submission",
+        description: error?.message || "An unexpected error occurred.",
+        variant: "destructive",
+      })
+      setSubmission(null) // Ensure submission is null on catch
     } finally {
       setLoading(false)
     }
@@ -205,6 +272,7 @@ export default function SubmissionDetailsPage() {
 
     fetchParticipants();
   }, [submission?.id]);
+
 
   // Fetch the location dynamically using the promoter-location-service
   useEffect(() => {
@@ -376,6 +444,36 @@ export default function SubmissionDetailsPage() {
 
   return (
       <div className="flex flex-col space-y-6">
+        {/* Add Rejection Dialog */}
+        <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Submission</DialogTitle>
+              <DialogDescription>
+                Please provide a reason for rejecting this submission. This note will be visible to the promoter.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Textarea
+                placeholder="Enter rejection reason..."
+                value={rejectionNote}
+                onChange={(e) => setRejectionNote(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleUpdateStatus("rejected", rejectionNote)}
+                disabled={!rejectionNote.trim() || loading}
+              >
+                Confirm Rejection
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => router.back()} className="mr-4">
@@ -389,7 +487,8 @@ export default function SubmissionDetailsPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            {submission.status !== "approved" && (
+            {/* Edit button - show for draft or rejected submissions */}
+            {(submission.status === "submitted" || submission.status === "rejected") && (
               <Button
                 variant="outline"
                 onClick={() => router.push(`/projects/submissions/edit/${submission?.id}`)}
@@ -397,12 +496,31 @@ export default function SubmissionDetailsPage() {
                 Edit Submission
               </Button>
             )}
-            <Button
-              variant="default"
-              onClick={() => router.push("/submissions")}
-            >
-              Back to List
-            </Button>
+
+            {/* Approve/Reject buttons - show for admin users when status is submitted */}
+            {userProfile?.role === 'project-admin' && submission.status === "submitted" && (
+              <>
+                <Button
+                  variant="outline"
+                  className="text-green-600 hover:bg-green-50 hover:text-green-700 border-green-200"
+                  onClick={() => handleUpdateStatus("approved")}
+                  disabled={loading}
+                >
+                  <ThumbsUp className="mr-2 h-4 w-4" />
+                  Approve
+                </Button>
+                {/* Replace DialogTrigger with a regular Button that sets isRejectDialogOpen to true */}
+                <Button
+                  variant="outline"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                  onClick={() => setIsRejectDialogOpen(true)}
+                  disabled={loading}
+                >
+                  <ThumbsDown className="mr-2 h-4 w-4" />
+                  Reject
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -748,4 +866,7 @@ export default function SubmissionDetailsPage() {
       </div>
   )
 }
+
+
+// Function to handle status updates (Approve/Reject) - Moved inside component
 

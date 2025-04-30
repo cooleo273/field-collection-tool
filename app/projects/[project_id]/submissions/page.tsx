@@ -196,7 +196,7 @@ export default function ProjectAdminSubmissionsPage() {
                               <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
                                 Details
                               </Button>
-                              <Button
+                              {/* <Button
                                 size="sm"
                                 variant="outline"
                                 className="text-green-600 hover:bg-green-50 hover:text-green-700 border-green-200" // Added hover and border
@@ -213,7 +213,7 @@ export default function ProjectAdminSubmissionsPage() {
                               >
                                 <XCircle className="mr-1 h-4 w-4" />
                                 Reject
-                              </Button>
+                              </Button> */}
                             </div>
                           </div>
                         </CardContent>
@@ -410,7 +410,7 @@ export default function ProjectAdminSubmissionsPage() {
                             <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
                               Details
                             </Button>
-                            {/* Conditionally show Approve/Reject for pending in 'All' tab */}
+                            {/* Conditionally show Approve/Reject for pending in 'All' tab
                             {submission.status === 'submitted' && (
                               <>
                                 <Button
@@ -432,7 +432,7 @@ export default function ProjectAdminSubmissionsPage() {
                                   Reject
                                 </Button>
                               </>
-                            )}
+                            )} */}
                           </div>
                         </div>
                       </CardContent>

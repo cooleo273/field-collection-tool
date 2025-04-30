@@ -360,25 +360,44 @@ export default function SubmissionDetailsPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            {/* Allow editing for submissions that are not approved */}
             {submission.status !== "approved" && (
               <Button
                 variant="outline"
                 onClick={() => router.push(`/submissions/edit/${submission?.id}`)}
               >
-                Edit Submission
+                {submission.status === "rejected" ? "Update & Resubmit" : "Edit Submission"}
               </Button>
             )}
-            <Button
-              variant="default"
-              onClick={() => router.push("/submissions")}
-            >
-              Back to List
-            </Button>
           </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
           <div className="md:col-span-2 space-y-6">
+            {/* Display rejection note card if submission is rejected */}
+            {submission.status === "rejected" && submission.review_notes && (
+              <Card className="border-red-200 bg-red-50 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-red-700 flex items-center">
+                    <XCircle className="h-5 w-5 mr-2" />
+                    Rejection Feedback
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-red-700 italic">{submission?.review_notes}</p>
+                </CardContent>
+                <CardFooter className="border-t border-red-200 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => router.push(`/submissions/edit/${submission?.id}`)}
+                  >
+                    Update & Resubmit
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
             <Card className="overflow-hidden border-2 shadow-sm">
               {/* Display the location and specific location of the submission */}
               <CardHeader className="pb-3 bg-muted/30">
@@ -460,24 +479,7 @@ export default function SubmissionDetailsPage() {
               </CardContent>
             </Card>
 
-            {submission.status === "rejected" && submission.review_notes && (
-              <Card className="border-red-200 bg-red-50 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-red-700 flex items-center">
-                    <XCircle className="h-5 w-5 mr-2" />
-                    Rejection Feedback
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-red-700 italic">{submission?.review_notes}</p>
-                </CardContent>
-                <CardFooter className="border-t border-red-200 pt-4">
-                  <Button variant="outline" className="w-full" onClick={() => router.push("/submissions/new")}>
-                    Create New Submission
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
+            
           </div>
 
           <div className="space-y-6">
