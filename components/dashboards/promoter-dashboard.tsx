@@ -197,31 +197,6 @@ const ActivityFeedItem: React.FC<SubmissionListItemProps> = ({ submission, onCli
 );
 
 
-const SubmissionGridItem: React.FC<SubmissionListItemProps> = ({ submission, onClick }) => (
-  <div
-    key={submission.id}
-    className="border rounded-lg p-4 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-200 cursor-pointer flex flex-col h-full"
-    onClick={onClick}
-  >
-    <div className="flex items-center justify-between mb-2 gap-2">
-      <h3 className="text-lg font-semibold truncate flex-1">
-        {submission.title || `Submission ${submission.activity_stream}...`}
-      </h3>
-      <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${getStatusBadgeColorClass(submission.status)} text-white whitespace-nowrap`}>
-        {submission.status}
-      </span>
-    </div>
-    <p className="text-sm text-muted-foreground mb-2 mt-auto"> {/* mt-auto pushes date down */}
-      Submitted on {formatDate(submission.created_at)}
-    </p>
-    {/* Optional: Add user info if needed and available
-    {submission.user_info?.full_name && (
-        <p className="text-sm text-muted-foreground text-xs mt-1">
-          By {submission.user_info.full_name}
-        </p>
-    )} */}
-  </div>
-);
 
 const SubmissionListSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => (
     <div className="space-y-4">
@@ -342,7 +317,7 @@ export function PromoterDashboard() {
   return (
     <div className="container mx-auto py-8 px-4 fade-in"> {/* Added simple fade-in class (needs CSS) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Promoter Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">DFS Promoter Dashboard</h1>
         <Button onClick={handleNewSubmissionClick} size="lg">
           <Upload className="mr-2 h-5 w-5" />
           New Submission
@@ -401,9 +376,8 @@ export function PromoterDashboard() {
 
       {/* Tabs Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3"> {/* Full width tabs */}
+        <TabsList className="grid w-full grid-cols-2"> {/* Full width tabs */}
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="submissions">My Submissions</TabsTrigger>
           <TabsTrigger value="locations">Assigned Locations</TabsTrigger>
         </TabsList>
 
@@ -480,47 +454,7 @@ export function PromoterDashboard() {
           {/* ... (keep commented out or implement) ... */}
         </TabsContent>
 
-        {/* My Submissions Tab Content */}
-        <TabsContent value="submissions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Recent Submissions</CardTitle> {/* Changed title */}
-              <CardDescription>
-                A view of your recently submitted data forms. {/* Updated description */}
-                {/* TODO: Implement pagination/infinite scroll to view ALL submissions. */}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-               {loading ? (
-                    <SubmissionGridSkeleton count={6} />
-                ) : error ? (
-                     <p className="text-red-600 text-center py-4">Could not load submissions.</p>
-                ) : recentSubmissions.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {recentSubmissions.map((sub) => (
-                    <SubmissionGridItem
-                      key={sub.id}
-                      submission={sub}
-                      onClick={() => handleSubmissionClick(sub.id)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                 <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-                     <ClipboardList className="h-12 w-12 mb-4 text-gray-400"/>
-                     <p className="text-lg font-medium">No Submissions Found</p>
-                     <p className="text-sm">Click 'New Submission' to get started.</p>
-                 </div>
-              )}
-            </CardContent>
-          </Card>
-           {/* TODO: Add Pagination controls here if loading all submissions */}
-           {/* {!loading && !error && recentSubmissions.length > 0 && (
-                <div className="flex justify-center mt-4">
-                    <Button variant="outline">Load More</Button>
-                </div>
-           )} */}
-        </TabsContent>
+        
 
         {/* Locations Tab Content */}
         <TabsContent value="locations" className="space-y-4">

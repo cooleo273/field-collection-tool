@@ -43,10 +43,20 @@ export async function getProjectAdminDashboardStats(projectId: string): Promise<
 
     if (submissionsError) throw submissionsError;
 
-    // Get recent submissions with related data
+    // Get all locations for the project
+    const { data: locations, error: locationsError } = await supabase
+      .from("locations")
+      .select("*")
+
+    if (locationsError) throw locationsError;
+
+    // Get recent submissions with related data including user information
     const { data: recentSubmissions, error: recentError } = await supabase
       .from("submissions")
-      .select("*")
+      .select(`
+        *,
+        user_info:users!submissions_submitted_by_fkey(id, name)
+      `)
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(5);
@@ -56,14 +66,11 @@ export async function getProjectAdminDashboardStats(projectId: string): Promise<
     // Count pending submissions
     const pendingSubmissions = allSubmissions?.filter((s) => s.status === "submitted").length || 0;
 
-    // Get unique locations from submissions
-    const uniqueLocations = new Set(allSubmissions?.map((s) => s.location_id).filter(Boolean));
-
     return {
-      stats: { // Removed campaigns logic
+      stats: {
         submissions: allSubmissions?.length || 0,
         pendingSubmissions,
-        locations: uniqueLocations.size,
+        locations: locations?.length || 0,
       },
       recentSubmissions: recentSubmissions || [],
       submissionTrends: calculateSubmissionTrends(allSubmissions || []),
@@ -88,10 +95,17 @@ export async function getProjectSubmissionsStats(projectId: string): Promise<Das
 
     if (submissionsError) throw submissionsError;
 
-    // Get recent submissions with related data
+    // Get recent submissions with related data including user information
     const { data: recentSubmissions, error: recentError } = await supabase
       .from("submissions")
-      .select("*, locations(name)")
+      .select(`
+        *,
+        user_info:submitted_by(
+          id,
+          name,
+          full_name
+        )
+      `)
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(5);
@@ -179,34 +193,6 @@ function calculateStatusDistribution(submissions: any[]): StatusDistributionData
     { name: 'Rejected', value: statusCounts.rejected, color: '#ef4444' },
     { name: 'Other', value: statusCounts.other, color: '#3b82f6' }
   ]
-}
-
-// Helper function to calculate campaign performance
-function calculateCampaignPerformance(submissions: any[], campaigns: any[]): CampaignPerformanceData[] {
-  // Create a map of campaign IDs to names
-  const campaignMap = new Map(campaigns.map(c => [c.id, c.name || `Campaign ${c.id}`]))
-  
-  // Count submissions by campaign
-  const campaignCounts: Record<string, number> = {}
-  
-  submissions.forEach(submission => {
-    const campaignId = submission.campaign_id
-    if (campaignId) {
-      if (!campaignCounts[campaignId]) {
-        campaignCounts[campaignId] = 0
-      }
-      campaignCounts[campaignId]++
-    }
-  })
-  
-  // Convert to array format for chart
-  return Object.entries(campaignCounts)
-    .map(([campaignId, count]) => ({
-      name: campaignMap.get(campaignId) || `Campaign ${campaignId}`,
-      value: count
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10) // Top 10 campaigns
 }
 
 interface PromoterDashboardStats {

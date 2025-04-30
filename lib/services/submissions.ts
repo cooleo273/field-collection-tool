@@ -1,7 +1,10 @@
 import { supabase } from "./client";
 import type { Database } from "@/types/supabase";
 
-export type Submission = Database["public"]["Tables"]["submissions"]["Row"];
+export type SubmissionInsert = Omit<Database['public']['Tables']['submissions']['Insert'], 'id' | 'created_at' | 'updated_at' | 'submitted_at'> & {
+  submitted_at?: string; // Allow optional submitted_at override
+};
+export type Submission = Database['public']['Tables']['submissions']['Row'];
 export type SubmissionStatus = "draft" | "submitted" | "approved" | "rejected";
 export type SyncStatusType = "local" | "synced";
 
@@ -136,58 +139,40 @@ export async function getRecentSubmissions(limit = 5) {
     return [];
   }
 }
-export async function createSubmission(
-  submission: Omit<
-    Database["public"]["Tables"]["submissions"]["Insert"],
-    "id" | "created_at" | "updated_at"
-  >,
-  photoUrls?: string[]
-) {
-  if (photoUrls) {
-  } else {
-    console.log("No photo URLs provided.");
-  }
-  console.log("Creating submission with data:", submission);
+/**
+ * Create a new submission
+ */
+export async function createSubmission(submissionData: SubmissionInsert) {
+  try {
+    console.log("Creating submission with data: ", submissionData); // Keep this log for debugging
 
-  const { data, error } = await supabase
-    .from("submissions")
-    .insert([
-      {
-        ...submission,
-        status: "submitted" as SubmissionStatus,
-        sync_status: "synced" as SyncStatusType,
-        submitted_at: new Date().toISOString(),
-      },
-    ])
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('submissions')
+      .insert({
+        ...submissionData,
+        submitted_at: submissionData.submitted_at || new Date().toISOString(), // Ensure submitted_at is set
+      })
+      .select() // <-- Make sure this .select() is present
+      .single(); // <-- Use .single() if you expect only one row back
 
-  if (error) {
-    console.error("Error creating submission:", error);
-    throw error;
-  }
-
-
-  if (photoUrls && photoUrls.length > 0 && data) {
-
-    const photoEntries = photoUrls.map((url) => ({
-      submission_id: data.id,
-      photo_url: url,
-      created_at: new Date().toISOString(),
-    }));
-
-    const { error: photoError } = await supabase
-      .from("submission_photos")
-      .insert(photoEntries);
-
-    if (photoError) {
-      console.error("Error storing submission photos:", photoError);
-    } else {
-      console.log("Photo URLs stored successfully.");
+    if (error) {
+      console.error("Supabase error in createSubmission:", error);
+      // Throw the error so the calling function catches it
+      throw error;
     }
-  }
 
-  return data;
+    // Log the data returned by Supabase (or lack thereof)
+    console.log("Data returned from createSubmission insert:", data);
+
+    // Return both data and error (or null for error if successful)
+    // The calling function will handle checking if data exists
+    return { data: data ? [data] : null, error: null }; // Wrap single result in array for consistency if needed, or adjust caller
+
+  } catch (error: any) {
+    console.error("Error caught in createSubmission function:", error);
+    // Return the error object so the calling function knows something went wrong
+    return { data: null, error };
+  }
 }
 
 export async function updateSubmission(

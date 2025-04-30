@@ -596,3 +596,105 @@ export async function getProjectPromoters(projectId: string) {
   }
 }
 
+// Add this function to your users.ts service file
+// export async function assignPromoterToLocation(promoterId: string, locationId: string) {
+//   try {
+//     const { data, error } = await supabase
+//       .from("promoter_locations")
+//       .update({ location_id: locationId })
+//       .eq("user_id", promoterId);
+
+//     if (error) {
+//       console.error("Error assigning promoter to location:", error);
+//       throw error;
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error("Error in assignPromoterToLocation:", error);
+//     throw error;
+//   }
+// }
+// ... existing code ...
+
+/**
+ * Assign a promoter to a single location
+ * If the promoter already has a location assigned, it will be updated
+ */
+export async function assignPromoterToLocation(promoterId: string, locationId: string) {
+  try {
+    // First check if the promoter already has a location assigned
+    const { data: existingAssignment, error: checkError } = await supabase
+      .from('promoter_locations')
+      .select('*')
+      .eq('user_id', promoterId)
+      .maybeSingle(); // Use maybeSingle to avoid error if no record exists
+    
+    if (checkError) {
+      console.error("Error checking existing location assignment:", checkError);
+      throw checkError;
+    }
+    
+    // If there's an existing assignment, update it
+    if (existingAssignment) {
+      const { data, error } = await supabase
+        .from('promoter_locations')
+        .update({ location_id: locationId })
+        .eq('user_id', promoterId)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Error updating promoter location:", error);
+        throw error;
+      }
+      
+      return data;
+    } 
+    // Otherwise, create a new assignment
+    else {
+      // Create the location assignment
+      const { data, error } = await supabase
+        .from('promoter_locations')
+        .insert({
+          user_id: promoterId,
+          location_id: locationId
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Error creating promoter location assignment:", error);
+        throw error;
+      }
+      
+      return data;
+    }
+  } catch (error) {
+    console.error("Error in assignPromoterToLocation:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get the current location assignment for a promoter
+ */
+export async function getPromoterLocationAssignment(promoterId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('promoter_locations')
+      .select('*')
+      .eq('user_id', promoterId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error fetching promoter location assignment:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in getPromoterLocationAssignment:", error);
+    throw error;
+  }
+}

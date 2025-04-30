@@ -43,18 +43,6 @@ export default function LocationsPage() {
     try {
       const data = await getLocations()
       setLocations(data)
-
-      // Create a map of parent locations
-      const parentMap: Record<string, string> = {}
-      data.forEach(location => {
-        if (location.parent_id) {
-          const parent = data.find(l => l.id === location.parent_id)
-          if (parent) {
-            parentMap[location.id] = parent.name
-          }
-        }
-      })
-      setParentLocations(parentMap)
     } catch (error) {
       console.error("Error loading locations:", error)
       toast({

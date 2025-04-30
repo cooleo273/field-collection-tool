@@ -5,13 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   LineChart, 
-  BarChart, 
   PieChart,
   Users, 
   FileDown, 
   Map,
-  ClipboardList,
-  Calendar
+  
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getProjectAdminDashboardStats } from "@/lib/services/admin-stats"
@@ -54,8 +52,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // Add this import
 import { getAssignedProjects } from "@/lib/services/projects"
 
+// First, let's add the import for useRouter
+import { useRouter } from "next/navigation"
+// Remove this line
+// import router from "next/router"
+
 export function ProjectAdminDashboard() {
   const { userProfile } = useAuth()
+  const router = useRouter() // This is correct
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [assignedProjects, setAssignedProjects] = useState<Array<{ id: string; name: string }>>([])
   const [stats, setStats] = useState<DashboardStats>({
@@ -67,8 +71,10 @@ export function ProjectAdminDashboard() {
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([])
   const [submissionTrends, setSubmissionTrends] = useState<SubmissionTrendData[]>([])
   const [statusDistribution, setStatusDistribution] = useState<StatusDistributionData[]>([])
-  const [campaignPerformance, setCampaignPerformance] = useState<CampaignPerformanceData[]>([])
-
+  
+  const handleSubmissionClick = (submissionId: string) => {
+  router.push(`/projects/submissions/${submissionId}`)
+}
   useEffect(() => {
     if (!userProfile?.id) return
     
@@ -118,11 +124,13 @@ export function ProjectAdminDashboard() {
         
         const data = await getProjectAdminDashboardStats(selectedProjectId)
         
+        // Add this line to debug the data structure
+        console.log("Recent submissions data:", data.recentSubmissions)
+        
         setStats(data.stats)
         setRecentSubmissions(data.recentSubmissions)
         setSubmissionTrends(data.submissionTrends)
         setStatusDistribution(data.statusDistribution)
-        setCampaignPerformance(data.campaignPerformance)
       } catch (error) {
         console.error("Error loading dashboard stats:", error)
       } finally {
@@ -185,11 +193,10 @@ export function ProjectAdminDashboard() {
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="submissions" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="submissions">Submissions</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -234,49 +241,6 @@ export function ProjectAdminDashboard() {
               </CardContent>
             </Card>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Campaign Performance</CardTitle>
-              <CardDescription>Submissions by campaign</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              {campaignPerformance.length > 0 ? (
-                <div className="h-full w-full">
-                  <CampaignPerformanceChart data={campaignPerformance} />
-                </div>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground flex-col">
-                  <BarChart className="h-8 w-8 mb-2" />
-                  <span>No campaign performance data available</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="campaigns" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Campaigns</CardTitle>
-              <CardDescription>
-                Performance metrics for your assigned campaigns
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              {campaignPerformance.length > 0 ? (
-                <div className="h-full w-full">
-                  <CampaignPerformanceChart data={campaignPerformance} showLabels={true} />
-                </div>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground flex-col">
-                  <BarChart className="h-8 w-8 mb-2" />
-                  <span>No campaign data available</span>
-                  <Button variant="outline" size="sm" className="mt-4">
-                    View All Campaigns
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
         <TabsContent value="submissions" className="space-y-4">
           <Card>
@@ -290,14 +254,18 @@ export function ProjectAdminDashboard() {
               {recentSubmissions.length > 0 ? (
                 <div className="space-y-4">
                   {recentSubmissions.map((submission) => (
-                    <div key={submission.id} className="flex items-center gap-4">
+                    <div 
+                      key={submission.id} 
+                      className="flex items-center gap-4 cursor-pointer hover:bg-muted p-2 rounded-md transition-colors"
+                      onClick={() => handleSubmissionClick(submission.id)}
+                    >
                       <div className={`w-2 h-2 rounded-full ${getStatusColor(submission.status)}`} />
                       <div className="flex-1 space-y-1">
                         <p className="text-sm font-medium leading-none">
-                          {submission.title || `Submission ${submission.id.slice(0, 8)}`}
+                          {submission.title || `${submission.activity_stream}`}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {formatDate(submission.created_at)} by {submission.user_info?.full_name || 'Unknown'}
+                          {formatDate(submission.created_at)} by {getUserName(submission)}
                         </p>
                       </div>
                     </div>
@@ -315,6 +283,8 @@ export function ProjectAdminDashboard() {
     </div>
   )
 }
+
+// Move the function inside the component
 
 // Update chart component type definitions
 interface SubmissionTrendsChartProps {
@@ -472,5 +442,31 @@ function getStatusColor(status: string) {
 function formatDate(dateString: string) {
   const date = new Date(dateString)
   return date.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+// Helper function to get user name from submission
+function getUserName(submission: any) {
+  if (submission.user_info?.full_name) {
+    return submission.user_info.full_name;
+  }
+  
+  if (submission.user_info?.name) {
+    return submission.user_info.name;
+  }
+  
+  if (submission.users?.name) {
+    return submission.users.name;
+  }
+  
+  if (submission.submitted_by_name) {
+    return submission.submitted_by_name;
+  }
+  
+  // If we have the ID but no name, show a shortened version of the ID
+  if (submission.submitted_by) {
+    return `User ${submission.submitted_by.substring(0, 8)}...`;
+  }
+  
+  return 'Unknown';
 }
 

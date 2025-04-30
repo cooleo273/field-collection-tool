@@ -12,6 +12,7 @@ import { Sidebar } from "./sidebar"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Database, Menu } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { Toaster } from "@/components/ui/toaster"
 
 export function   DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -87,6 +88,7 @@ export function   DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* Main content - full width on mobile */}
         <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
+      <Toaster />
     </div>
   )
 }
