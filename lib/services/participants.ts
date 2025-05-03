@@ -51,11 +51,21 @@ export async function getCampaignById(id: string) {
  * Get participants count by submission ID
  */
 export async function getParticipantsCountBySubmissionId(submissionId: string): Promise<number> {
+  const getPagination = (page: number, pageSize: number) => {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    return { from, to };
+  };
+
   try {
+    const page = 1; // Current page number
+    const pageSize = 10; // Number of items per page
+    const { from, to } = getPagination(page, pageSize);
     const { count, error } = await supabase
       .from("participants")
       .select("id", { count: "exact" })
       .eq("submission_id", submissionId)
+      .range(from, to);
 
     if (error) {
       console.error("Error fetching participants count by submission ID:", error)

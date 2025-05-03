@@ -35,8 +35,7 @@ import type { Location } from "@/lib/services/locations"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  type: z.enum(["kebele", "district", "zone", "region"]),
-  parent_id: z.string().nullable(),
+  type: z.enum(["town", "kebele", "district", "zone", "region"]),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -61,8 +60,7 @@ export function AddLocationDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      type: "kebele",
-      parent_id: parentLocation?.id || null,
+      type: "town",
     },
     mode: "onChange",
   })
@@ -129,6 +127,7 @@ export function AddLocationDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="town">Town</SelectItem>
                       <SelectItem value="kebele">Kebele</SelectItem>
                       <SelectItem value="district">District</SelectItem>
                       <SelectItem value="zone">Zone</SelectItem>

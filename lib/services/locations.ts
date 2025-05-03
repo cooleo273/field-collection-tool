@@ -9,7 +9,7 @@ export type Location = LocationRow & {
   parent?: {
     id: string
     name: string
-    type: "kebele" | "district" | "zone" | "region"
+    type: "kebele" | "district" | "zone" | "region" | "town"
   } | null
 }
 
@@ -55,17 +55,12 @@ export async function getLocationById(id: string): Promise<Location | null> {
 /**
  * Get locations by type
  */
-export async function getLocationsByType(type: "kebele" | "district" | "zone" | "region") {
+export async function getLocationsByType(type: "kebele" | "district" | "zone" | "region" | "town") {
   try {
     const { data, error } = await supabase
       .from("locations")
       .select(`
         *,
-        parent:parent_id (
-          id,
-          name,
-          type
-        )
       `)
       .eq("type", type)
       .order("name", { ascending: true })
@@ -85,32 +80,7 @@ export async function getLocationsByType(type: "kebele" | "district" | "zone" | 
 /**
  * Get child locations
  */
-export async function getChildLocations(parentId: string) {
-  try {
-    const { data, error } = await supabase
-      .from("locations")
-      .select(`
-        *,
-        parent:parent_id (
-          id,
-          name,
-          type
-        )
-      `)
-      .eq("parent_id", parentId)
-      .order("name", { ascending: true })
 
-    if (error) {
-      console.error("Error fetching child locations:", error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error("Error in getChildLocations:", error)
-    return []
-  }
-}
 
 /**
  * Get locations by campaign

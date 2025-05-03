@@ -10,6 +10,7 @@ import { getSupabaseClient } from "@/lib/services/client"
 import { useAuth } from "@/contexts/auth-context"
 import { Eye, Edit, Upload, Filter } from "lucide-react"
 import { format } from "date-fns"
+import { getLocationForPromoter } from "@/lib/services/repositories/promoter-location-service"
 
 // Updated interface to match the database schema
 interface Submission {
@@ -29,8 +30,7 @@ interface Submission {
   created_at: string
   updated_at: string
   // Join data
-  campaigns?: { name: string }
-  location?: string
+  locations?: { name: string }
 }
 
 export default function SubmissionsPage() {
@@ -41,6 +41,7 @@ export default function SubmissionsPage() {
 
   useEffect(() => {
     if (!userProfile) return
+    const location = getLocationForPromoter(userProfile.id)
 
     const fetchSubmissions = async () => {
       try {
@@ -161,8 +162,7 @@ export default function SubmissionsPage() {
                     <span className={getStatusBadgeClass(submission.status)}>{submission.status}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    <p>Location: {submission.location || 'Unknown'}</p>
-                    <p>Campaign: {submission.campaigns?.name || 'Unknown'}</p>
+                    <p>Location: {submission.locations?.name || 'Unknown'}</p>
                     <p>Participants: {submission.participant_count}</p>
                     <p>Date: {format(new Date(submission.created_at), "PPP")}</p>
                   </div>
@@ -172,7 +172,7 @@ export default function SubmissionsPage() {
                         <Eye className="mr-1 h-3 w-3" /> View
                       </Link>
                     </Button>
-                    {submission.status !== "approved" && (
+                    {submission.status !== "approved" && submission.status !=="rejected" && (
                       <Button variant="outline" size="sm" asChild className="flex-1">
                         <Link href={`/submissions/edit/${submission.id}`}>
                           <Edit className="mr-1 h-3 w-3" /> Edit

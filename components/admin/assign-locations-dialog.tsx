@@ -1,176 +1,144 @@
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
-import { updateUser } from "@/lib/services/users"
-import { supabase } from "@/lib/services/client"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/components/ui/use-toast";
+import { getLocations } from "@/lib/services/locations";
+import { assignPromoterToLocation, getPromoterLocationAssignment } from "@/lib/services/users";
+import { LoadingSpinner } from "@/components/loading-spinner";
 
 interface AssignLocationsDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
-  promoter: any
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  promoter: any;
 }
 
 export function AssignLocationsDialog({
   open,
   onOpenChange,
   onSuccess,
-  promoter
+  promoter,
 }: AssignLocationsDialogProps) {
-  const { toast } = useToast()
-  const [locations, setLocations] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([])
-  const [submitting, setSubmitting] = useState(false)
+  const { toast } = useToast();
+  const [locations, setLocations] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
-      loadLocations()
-      loadAssignedLocations()
+      loadData();
     }
-  }, [open])
+  }, [open, promoter]);
 
-  const loadLocations = async () => {
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('*')
-        .order('name')
-
-      if (error) throw error
-      setLocations(data || [])
+      // Load all locations
+      const locationsData = await getLocations();
+      setLocations(locationsData);
+      
+      // Get current assignment if any
+      const assignment = await getPromoterLocationAssignment(promoter.id);
+      
+      // Set the initially selected location if the promoter has one
+      if (assignment && assignment.location_id) {
+        setSelectedLocation(assignment.location_id);
+      } else {
+        setSelectedLocation("");
+      }
     } catch (error) {
-      console.error('Error loading locations:', error)
+      console.error("Error loading data:", error);
       toast({
-        title: "Error loading locations",
-        description: "There was a problem loading the locations. Please try again.",
+        title: "Error loading data",
+        description: "There was a problem loading the locations or current assignment. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const loadAssignedLocations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('promoter_locations')
-        .select('location_id')
-        .eq('user_id', promoter.id)
-
-      if (error) throw error
-      setSelectedLocations(data?.map(item => item.location_id) || [])
-    } catch (error) {
-      console.error('Error loading assigned locations:', error)
-      toast({
-        title: "Error loading assigned locations",
-        description: "There was a problem loading the assigned locations. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
+  };
 
   const handleSubmit = async () => {
-    setSubmitting(true)
-    try {
-      await updateUser(promoter.id, {
-        assignedLocations: selectedLocations
-      })
-
+    if (!selectedLocation) {
       toast({
-        title: "Locations assigned",
-        description: "The locations have been successfully assigned to the promoter.",
-      })
-      onSuccess()
-      onOpenChange(false)
-    } catch (error) {
-      console.error('Error assigning locations:', error)
-      toast({
-        title: "Error assigning locations",
-        description: "There was a problem assigning the locations. Please try again.",
+        title: "No location selected",
+        description: "Please select a location to assign to this promoter.",
         variant: "destructive",
-      })
-    } finally {
-      setSubmitting(false)
+      });
+      return;
     }
-  }
 
-  const filteredLocations = locations.filter(location =>
-    location.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+    setSubmitting(true);
+    try {
+      await assignPromoterToLocation(promoter.id, selectedLocation);
+      toast({
+        title: "Location assigned",
+        description: `The promoter has been assigned to the selected location.`,
+      });
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error assigning location:", error);
+      toast({
+        title: "Error assigning location",
+        description: "There was a problem assigning the location. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Assign Locations to {promoter.name}</DialogTitle>
+          <DialogTitle>Assign Location to {promoter?.name}</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="relative">
-            <Input
-              placeholder="Search locations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-8"
-            />
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <LoadingSpinner />
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {filteredLocations.map((location) => (
-                <div key={location.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={location.id}
-                    checked={selectedLocations.includes(location.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedLocations([...selectedLocations, location.id])
-                      } else {
-                        setSelectedLocations(selectedLocations.filter(id => id !== location.id))
-                      }
-                    }}
-                  />
-                  <Label htmlFor={location.id}>{location.name}</Label>
+        ) : (
+          <>
+            <div className="py-4">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base">Select a location</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    A promoter can only be assigned to one location at a time.
+                  </p>
+                  {locations.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No locations available.</p>
+                  ) : (
+                    <RadioGroup value={selectedLocation} onValueChange={setSelectedLocation}>
+                      {locations.map((location) => (
+                        <div key={location.id} className="flex items-center space-x-2 py-2">
+                          <RadioGroupItem value={location.id} id={location.id} />
+                          <Label htmlFor={location.id} className="cursor-pointer">
+                            {location.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
                 </div>
-              ))}
+              </div>
             </div>
-          )}
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting || selectedLocations.length === 0}
-            >
-              {submitting ? (
-                <>
-                  <LoadingSpinner className="mr-2 h-4 w-4" />
-                  Assigning...
-                </>
-              ) : (
-                'Assign Locations'
-              )}
-            </Button>
-          </div>
-        </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={submitting}>
+                {submitting ? "Assigning..." : "Assign Location"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
-  )
-} 
+  );
+}

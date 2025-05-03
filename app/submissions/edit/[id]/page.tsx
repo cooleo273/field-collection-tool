@@ -58,11 +58,20 @@ const ACTIVITY_STREAM = [
   "IEC Material Distribution",
   "BroadCast Monitoring",
 ];
+const PRE_SESSION_DFS_LEVEL = [
+  "Low",
+  "Moderate", "High",
+]
+const POST_SESSION_DFS_IMPROVEMENT = [
+  "No Change",
+  "Some Improvement",
+  "Significant Improvement",
+]
 
 // Form schema
 const formSchema = z.object({
   activity_stream: z.string().min(1, "Campaign is required"),
-  location: z.string().min(1, "Location is required"),
+  specific_location: z.string().min(1, "Location is required"),
   community_group_type: z.string().min(1, "Community group type is required"),
   participant_count: z.coerce
     .number()
@@ -71,6 +80,13 @@ const formSchema = z.object({
     .string()
     .min(10, "Please provide more details about key issues discussed"),
   images: z.array(z.string()).min(1, "At least one photo is required"),
+  pre_session_dfs_level: z.string().optional(),
+  post_session_dfs_improvement: z.string().optional(),
+  estimated_dfs_adoption_count: z.coerce
+    .number({ invalid_type_error: "Estimated adoption count must be a number" })
+    .int("Estimated adoption count must be a whole number")
+    .nonnegative("Estimated adoption count cannot be negative")
+    .optional(),
 });
 
 export default function EditSubmissionPage() {
@@ -90,11 +106,14 @@ export default function EditSubmissionPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       activity_stream: "",
-      location: "",
+      specific_location: "",
       community_group_type: "",
       participant_count: 0,
       key_issues: "",
       images: [],
+      pre_session_dfs_level: "",
+      post_session_dfs_improvement: "",
+      estimated_dfs_adoption_count: 0,
     },
   });
 
@@ -144,13 +163,26 @@ export default function EditSubmissionPage() {
 
         // Set form values
         form.setValue("activity_stream", submissionData.activity_stream);
-        form.setValue("location", submissionData.location);
+        form.setValue("specific_location", submissionData.specific_location);
         form.setValue(
           "community_group_type",
           submissionData.community_group_type
         );
         form.setValue("participant_count", submissionData.participant_count);
         form.setValue("key_issues", submissionData.key_issues);
+        // Set additional fields
+        form.setValue(
+          "pre_session_dfs_level",
+          submissionData.pre_session_dfs_level
+        );
+        form.setValue(
+          "post_session_dfs_improvement",
+          submissionData.post_session_dfs_improvement
+        );
+        form.setValue(
+          "estimated_dfs_adoption_count",
+          submissionData.estimated_dfs_adoption_count 
+        )
       } catch (error: any) {
         console.error("Error loading submission:", error);
         toast({
@@ -183,16 +215,31 @@ export default function EditSubmissionPage() {
 
     setIsSubmitting(true);
     try {
-      // Update the submission
-      const updatedSubmission = await updateSubmission(submission.id, {
+      // Create update object with proper typing
+      const updateData: any = {
         activity_stream: values.activity_stream,
-        location: values.location,
+        specific_location: values.specific_location,
         community_group_type: values.community_group_type,
         participant_count: values.participant_count,
         key_issues: values.key_issues,
-        status: submission.status,
-        // Remove updated_at as it's handled by the updateSubmission function
-      });
+        pre_session_dfs_level: values.pre_session_dfs_level,
+        post_session_dfs_improvement: values.post_session_dfs_improvement,
+        estimated_dfs_adoption_count: values.estimated_dfs_adoption_count,
+      };
+
+      // If the submission was rejected, change status back to "submitted"
+      // and clear the rejection-related fields
+      if (submission.status === "rejected") {
+        updateData.status = "submitted";
+        updateData.review_notes = null;
+        updateData.reviewed_by = null;
+        updateData.reviewed_at = null;
+      } else {
+        updateData.status = submission.status;
+      }
+
+      // Update the submission
+      const updatedSubmission = await updateSubmission(submission.id, updateData);
 
       // Handle new photos (only the ones not in existingPhotos)
       const newPhotos = values.images.filter(
@@ -336,10 +383,10 @@ export default function EditSubmissionPage() {
 
                     <FormField
                       control={form.control}
-                      name="location"
+                      name="specific_location"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Location</FormLabel>
+                          <FormLabel>Specific Location</FormLabel>
                           <FormControl>
                             <Input type="text" className="h-10" {...field} />
                           </FormControl>
@@ -395,6 +442,30 @@ export default function EditSubmissionPage() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="estimated_dfs_adoption_count"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estimated</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder="Enter total count"
+                              className="h-10"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={e => {
+                                const value = e.target.value;
+                                field.onChange(value === '' ? undefined : Number(value));
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
@@ -421,6 +492,55 @@ export default function EditSubmissionPage() {
                       </FormItem>
                     )}
                   />
+                   <FormField
+                      control={form.control}
+                      name="pre_session_dfs_level"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pre-session DFS Awareness, Trust and Confidence level of participants</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select an activity type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {PRE_SESSION_DFS_LEVEL.map((a) => (
+                                <SelectItem key={a} value={a}>
+                                  {a}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="post_session_dfs_improvement"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Post-session DFS Awareness, Trust and Confidence level of participants</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select Post Session DFS Awareness" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {POST_SESSION_DFS_IMPROVEMENT.map((a) => (
+                                <SelectItem key={a} value={a}>
+                                  {a}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                
                 </div>
 
                 <div className="space-y-4 pt-2">
