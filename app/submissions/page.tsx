@@ -41,12 +41,11 @@ export default function SubmissionsPage() {
 
   useEffect(() => {
     if (!userProfile) return
-    const location = getLocationForPromoter(userProfile.id)
+    // const location = getLocationForPromoter(userProfile.id)
 
     const fetchSubmissions = async () => {
       try {
-        // Updated query to match the schema and include related data
-        const { data, error } = await supabase
+          const { data, error } = await supabase
           .from("submissions")
           .select(`
             *
@@ -65,35 +64,6 @@ export default function SubmissionsPage() {
     }
 
     fetchSubmissions()
-
-    // Set up real-time subscription with corrected field name
-    const subscription = supabase
-      .channel("submissions_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "submissions",
-          filter: `submitted_by=eq.${userProfile.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setSubmissions((prev) => [payload.new as Submission, ...prev])
-          } else if (payload.eventType === "UPDATE") {
-            setSubmissions((prev) =>
-              prev.map((submission) => (submission.id === payload.new.id ? (payload.new as Submission) : submission)),
-            )
-          } else if (payload.eventType === "DELETE") {
-            setSubmissions((prev) => prev.filter((submission) => submission.id !== payload.old.id))
-          }
-        },
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(subscription)
-    }
   }, [userProfile, supabase])
 
   const getStatusBadgeClass = (status: string) => {

@@ -83,57 +83,57 @@ export async function getProjectAdminDashboardStats(projectId: string): Promise<
   }
 }
 
-export async function getProjectSubmissionsStats(projectId: string): Promise<DashboardData> {
-  const supabase = getSupabaseClient();
+// export async function getProjectSubmissionsStats(projectId: string): Promise<DashboardData> {
+//   const supabase = getSupabaseClient();
 
-  try {
-    // Get submissions for the project
-    const { data: allSubmissions, error: submissionsError } = await supabase
-      .from("submissions")
-      .select("*")
-      .eq("project_id", projectId);
+//   try {
+//     // Get submissions for the project
+//     const { data: allSubmissions, error: submissionsError } = await supabase
+//       .from("submissions")
+//       .select("*")
+//       .eq("project_id", projectId);
 
-    if (submissionsError) throw submissionsError;
+//     if (submissionsError) throw submissionsError;
 
-    // Get recent submissions with related data including user information
-    const { data: recentSubmissions, error: recentError } = await supabase
-      .from("submissions")
-      .select(`
-        *,
-        user_info:submitted_by(
-          id,
-          name,
-          full_name
-        )
-      `)
-      .eq("project_id", projectId)
-      .order("created_at", { ascending: false })
-      .limit(5);
+//     // Get recent submissions with related data including user information
+//     const { data: recentSubmissions, error: recentError } = await supabase
+//       .from("submissions")
+//       .select(`
+//         *,
+//         user_info:submitted_by(
+//           id,
+//           name,
+//           full_name
+//         )
+//       `)
+//       .eq("project_id", projectId)
+//       .order("created_at", { ascending: false })
+//       .limit(5);
 
-    if (recentError) throw recentError;
+//     if (recentError) throw recentError;
 
-    // Count pending submissions
-    const pendingSubmissions = allSubmissions?.filter((s) => s.status === "submitted").length || 0;
+//     // Count pending submissions
+//     const pendingSubmissions = allSubmissions?.filter((s) => s.status === "submitted").length || 0;
 
-    // Get unique locations from submissions
-    const uniqueLocations = new Set(allSubmissions?.map((s) => s.location_id).filter(Boolean));
+//     // Get unique locations from submissions
+//     const uniqueLocations = new Set(allSubmissions?.map((s) => s.location_id).filter(Boolean));
 
-    return {
-      stats: {// Removed campaigns logic
-        submissions: allSubmissions?.length || 0,
-        pendingSubmissions,
-        locations: uniqueLocations.size,
-      },
-      recentSubmissions: recentSubmissions || [],
-      submissionTrends: calculateSubmissionTrends(allSubmissions || []),
-      statusDistribution: calculateStatusDistribution(allSubmissions || []),
-      campaignPerformance: [], // Removed campaign performance logic
-    };
-  } catch (error) {
-    console.error("Error fetching project submissions stats:", error);
-    throw error;
-  }
-}
+//     return {
+//       stats: {// Removed campaigns logic
+//         submissions: allSubmissions?.length || 0,
+//         pendingSubmissions,
+//         locations: uniqueLocations.size,
+//       },
+//       recentSubmissions: recentSubmissions || [],
+//       submissionTrends: calculateSubmissionTrends(allSubmissions || []),
+//       statusDistribution: calculateStatusDistribution(allSubmissions || []),
+//       campaignPerformance: [], // Removed campaign performance logic
+//     };
+//   } catch (error) {
+//     console.error("Error fetching project submissions stats:", error);
+//     throw error;
+//   }
+// }
 
 // Helper function to calculate submission trends for the last 30 days
 function calculateSubmissionTrends(submissions: any[]): SubmissionTrendData[] {
@@ -250,43 +250,43 @@ export async function getPromoterDashboardStats(userId: string): Promise<Promote
   }
 }
 
-export async function getProjectSubmissions(projectId: string) {
-  const supabase = getSupabaseClient();
+// export async function getProjectSubmissions(projectId: string) {
+//   const supabase = getSupabaseClient();
 
-  try {
-    // Fetch all submissions for the given project
-    const { data: submissions, error } = await supabase
-      .from("submissions")
-      .select("*")
-      .eq("project_id", projectId);
+//   try {
+//     // Fetch all submissions for the given project
+//     const { data: submissions, error } = await supabase
+//       .from("submissions")
+//       .select("*")
+//       .eq("project_id", projectId);
 
-    if (error) throw error;
+//     if (error) throw error;
 
-    return submissions || [];
-  } catch (error) {
-    console.error("Error fetching submissions for project:", error);
-    throw error;
-  }
-}
+//     return submissions || [];
+//   } catch (error) {
+//     console.error("Error fetching submissions for project:", error);
+//     throw error;
+//   }
+// }
 
-export async function getProjectDetails(projectId: string) {
-  const supabase = getSupabaseClient();
+// export async function getProjectDetails(projectId: string) {
+//   const supabase = getSupabaseClient();
 
-  try {
-    const { data, error } = await supabase
-      .from("projects")
-      .select("name")
-      .eq("id", projectId)
-      .single();
+//   try {
+//     const { data, error } = await supabase
+//       .from("projects")
+//       .select("name")
+//       .eq("id", projectId)
+//       .single();
 
-    if (error) throw error;
+//     if (error) throw error;
 
-    return data;
-  } catch (error) {
-    console.error("Error fetching project details:", error);
-    throw error;
-  }
-}
+//     return data;
+//   } catch (error) {
+//     console.error("Error fetching project details:", error);
+//     throw error;
+//   }
+// }
 
 export async function getUserDetails(userId: string) {
   const supabase = getSupabaseClient();
@@ -305,4 +305,77 @@ export async function getUserDetails(userId: string) {
     console.error("Error fetching user details:", error);
     throw error;
   }
+}
+
+// --- EXPORT this interface ---
+export interface ProjectSubmission {
+  // Include all fields from your 'submissions' table you need
+  id: string;
+  project_id: string;
+  submitted_by: string;
+  status: string;
+  community_group_type: string;
+  activity_stream: string; // Added based on usage
+  participant_count: number;
+  submitted_at: string;
+  // Add other submission fields...
+
+  // These will be populated by the join
+  project_name?: string;
+  submitted_by_name?: string;
+}
+
+// --- DEFINE and EXPORT this interface ---
+export interface GetSubmissionsResponse {
+  data: ProjectSubmission[];
+  count: number | null; // Total count for pagination
+}
+
+// --- MODIFIED getProjectSubmissions ---
+export async function getProjectSubmissions(
+  projectId: string,
+  page: number = 1,         // ACCEPT page argument
+  pageSize: number = 10     // ACCEPT pageSize argument
+): Promise<GetSubmissionsResponse> { // RETURN this Promise structure
+  const supabase = getSupabaseClient();
+  const offset = (page - 1) * pageSize;
+
+  try {
+    const { data, error, count } = await supabase
+      .from("submissions")
+      .select(
+        `
+        *,
+        projects:project_id ( name ),
+        users:submitted_by ( name )
+      `,
+        { count: "exact" } // USE count
+      )
+      .eq("project_id", projectId)
+      .order("submitted_at", { ascending: false })
+      .range(offset, offset + pageSize - 1); // USE range
+
+    if (error) throw error;
+
+    const mappedData = data?.map((item: any) => ({
+        ...item,
+        project_name: item.projects?.name,
+        submitted_by_name: item.users?.name
+    })) || [];
+
+    // RETURN the object structure
+    return { data: mappedData, count: count };
+
+  } catch (err) {
+    console.error("Error in getProjectSubmissions service:", err);
+    throw new Error(`Failed to fetch submissions for project ${projectId}`);
+  }
+}
+
+// --- Keep other functions as needed ---
+export async function getProjectDetails(projectId: string) {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('projects').select('name').eq('id', projectId).single();
+    if (error) throw error;
+    return data || { name: 'Unknown Project' };
 }

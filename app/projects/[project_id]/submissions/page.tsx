@@ -1,416 +1,211 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { LoadingSpinner } from "@/components/loading-spinner"
-// Import necessary icons
-import { RefreshCw, CheckCircle, XCircle, Inbox, FileText, CalendarDays, User } from "lucide-react" 
-import { formatDate } from "@/lib/utils"
-import { getSubmissions, updateSubmissionStatus } from "@/lib/services/submissions"
-import { getProjectSubmissions, getProjectDetails, getUserDetails } from "@/lib/services/admin-stats"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import {
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  Inbox,
+  FileText,
+  CalendarDays,
+  User,
+  Plus,
+  AlertTriangle, // Keep necessary imports
+} from "lucide-react";
+import { formatDate } from "@/lib/utils";
+import { updateSubmissionStatus } from "@/lib/services/submissions";
+import { getProjectSubmissions, ProjectSubmission } from "@/lib/services/admin-stats";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
-// Helper function to get the appropriate status badge - Adjusted styles
 const getStatusBadge = (status: string) => {
-  switch (status) {
+   switch (status) {
     case "submitted":
-      // Use a lighter orange background with darker text for better consistency
-      return <Badge variant="secondary" className="bg-orange-100 text-orange-400 border border-orange-300 hover:bg-orange-200">Submitted</Badge>; 
+      return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-200">Submitted</Badge>;
     case "approved":
-      // Added a subtle border
-      return <Badge variant="secondary" className="bg-green-100 text-green-800 border border-green-200">Approved</Badge>; 
+      return <Badge variant="secondary" className="bg-green-100 text-green-800 border border-green-200">Approved</Badge>;
     case "rejected":
-      // Use default destructive variant which often has good contrast
-      return <Badge variant="destructive">Rejected</Badge>; 
+      return <Badge variant="destructive">Rejected</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
 };
 
+const PAGE_SIZE = 10;
+
 export default function ProjectAdminSubmissionsPage() {
   const params = useParams();
-  const project_id = params.project_id as string; // Directly access and type project_id
+  const project_id = params.project_id as string;
+  const router = useRouter();
 
-  const router = useRouter()
-  const [submissions, setSubmissions] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalSubmissions, setTotalSubmissions] = useState(0);
+  const [activeTab, setActiveTab] = useState("submitted");
 
-  useEffect(() => {
-    loadSubmissions()
-  }, []) // Keep dependency array empty if it should only run once on mount
+  const totalPages = Math.ceil(totalSubmissions / PAGE_SIZE);
 
-  const loadSubmissions = async () => {
+  const loadSubmissions = useCallback(async (page: number) => {
+    if (!project_id) return;
+
     setLoading(true);
+    setError(null);
+    console.log(`Loading submissions for page ${page}`);
     try {
-      const data = await getProjectSubmissions(project_id);
-      const enrichedData = await Promise.all(
-        data.map(async (submission) => {
-          const projectDetails = await getProjectDetails(submission.project_id); // Fetch project details
-          const userDetails = await getUserDetails(submission.submitted_by); // Fetch user details
-          return {
-            ...submission,
-            project_name: projectDetails.name,
-            submitted_by_name: userDetails.name,
-          };
-        })
-      );
-      setSubmissions(enrichedData);
-    } catch (error) {
-      console.error("Error loading submissions:", error);
+      const { data, count } = await getProjectSubmissions(project_id, page, PAGE_SIZE);
+      setSubmissions(data || []);
+      setTotalSubmissions(count || 0);
+    } catch (err: any) {
+      console.error("Error loading submissions:", err);
+      setError(err.message || "Failed to load submissions.");
+      setSubmissions([]);
+      setTotalSubmissions(0);
     } finally {
       setLoading(false);
     }
-  }
+  }, [project_id]);
 
-  // Handler to update the status of a submission
+  useEffect(() => {
+    loadSubmissions(currentPage);
+  }, [currentPage, loadSubmissions]);
+
   const handleUpdateStatus = async (submissionId: string, status: "approved" | "rejected") => {
     try {
-      await updateSubmissionStatus(submissionId, status)
-      await loadSubmissions()
-    } catch (error) {
-      console.error("Error updating status:", error)
+      setLoading(true);
+      await updateSubmissionStatus(submissionId, status);
+      await loadSubmissions(currentPage);
+    } catch (err) {
+      console.error("Error updating status:", err);
+      setError("Failed to update submission status.");
+    } finally {
+        setLoading(false);
     }
-  }
+  };
 
-  // Handler to navigate to the submission details page
   const handleViewDetails = (submissionId: string) => {
-    router.push(`/projects/submissions/${submissionId}`)
-  }
+    router.push(`/projects/submissions/${submissionId}`);
+  };
 
   const handlePromoterClick = (promoterId: string) => {
     router.push(`/projects/${project_id}/promoters/${promoterId}`);
   };
 
-  if (loading) {
-    // Centered loading spinner
-    return (
-      <div className="flex items-center justify-center h-64"> 
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  // Utility to safely render a property if it's an object
-  const renderField = (field: any, fallback?: string) => {
-    if (typeof field === "object" && field !== null) {
-      return field.name || field.id || fallback || "N/A"
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
     }
-    return field || fallback || "N/A"
-  }
+  };
 
-  // Helper function for rendering empty state - Moved outside the return statement
-  const renderEmptyState = (message: string) => (
+   const renderEmptyState = (message: string) => (
     <div className="text-center py-10 text-muted-foreground flex flex-col items-center gap-2">
-      <Inbox className="h-8 w-8 opacity-50" /> {/* Added Icon */}
-      <p>{message}</p> {/* Correctly accesses the message parameter */}
+      <Inbox className="h-8 w-8 opacity-50" />
+      <p>{message}</p>
     </div>
   );
 
+  const getFilteredSubmissions = () => {
+    if (activeTab === 'all') return submissions;
+    return submissions.filter(s => s.status === activeTab);
+  }
+
+  const filteredSubmissions = getFilteredSubmissions();
+
   return (
-    // Added padding to the main container
-    <div className="p-4 md:p-6 space-y-6"> 
+    <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Submissions</h1> 
+          <h1 className="text-2xl font-bold tracking-tight">Submissions</h1>
           <p className="text-muted-foreground">Review and manage field data submissions</p>
         </div>
-        {/* Grouped buttons */}
-        <div className="flex gap-2"> 
+        <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => router.push(`/projects/submissions/new`)}>
+             <Plus className="mr-2 h-4 w-4"/>
             New Submission
           </Button>
-          <Button variant="outline" size="sm" onClick={loadSubmissions}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={() => loadSubmissions(currentPage)} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="submitted">
-        <TabsList className="mb-4 grid w-full grid-cols-2 sm:grid-cols-4"> {/* Improved responsiveness */}
-          <TabsTrigger value="submitted">Pending Review</TabsTrigger>
+      {error && (
+        <Card className="border-destructive bg-destructive/10 p-4">
+            <div className="flex items-center gap-2 text-destructive font-medium">
+                <AlertTriangle className="h-5 w-5"/>
+                Error
+            </div>
+            <p className="text-destructive/90 text-sm mt-1">{error}</p>
+        </Card>
+      )}
+
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4 grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="submitted">Pending</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="all">All Submissions</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
 
-        {/* Helper function for rendering empty state - Definition removed from here */}
-        {/* const renderEmptyState = (message: string) => ( ... ); */}
-
-        {/* Pending submissions */}
-        <TabsContent value="submitted">
-          <Card>
-            <CardHeader>
-              <CardTitle>Submissions Awaiting Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submissions.filter((s) => s.status === "submitted").length === 0 ? (
-                renderEmptyState("No pending submissions") // Now correctly calls the function
-              ) : (
+        <TabsContent value={activeTab} className="space-y-4">
+            {loading && filteredSubmissions.length === 0 ? (
                 <div className="space-y-4">
-                  {submissions
-                    .filter((s) => s.status === "submitted")
-                    .map((submission) => (
-                      // Added border and hover effect to submission card
-                      <Card key={submission.id} className="border hover:shadow-sm transition-shadow duration-200"> 
-                        <CardContent className="p-4">
-                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                            <div className="flex-grow space-y-2"> {/* Added space-y for vertical spacing */}
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-base"> {/* Slightly larger font */}
-                                  {submission.project_name || "Unknown Project"}
-                                </h3>
-                                {getStatusBadge(submission.status)}
-                              </div>
-                              <p className="text-sm text-muted-foreground flex items-center gap-1.5"> {/* Added flex for icon alignment */}
-                                <FileText className="h-4 w-4" /> {/* Icon */}
-                                Community Group : {submission.community_group_type || "N/A"} • {submission.activity_stream || "N/A"}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground"> {/* Use flex-wrap */}
-                                <Badge variant="outline" className="flex items-center gap-1"> {/* Icon in badge */}
-                                  <User className="h-3 w-3" />
-                                  {submission.participant_count} participants
-                                </Badge>
-                                <span className="flex items-center gap-1"> {/* Icon for submitter */}
-                                  <User className="h-3 w-3" />
-                                  Submitted by 
-                                  <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handlePromoterClick(submission.submitted_by); }}
-                                    className="text-primary hover:underline flex font-medium items-center justify-center" // Use primary color
-                                  >
-                                    {submission.submitted_by_name}
-                                  </a>
-                                </span>
-                                <span className="flex items-center gap-1"> {/* Icon for date */}
-                                  <CalendarDays className="h-3 w-3" />
-                                  {formatDate(submission.submitted_at)}
-                                </span>
-                              </div>
-                            </div>
-                            {/* Adjusted button spacing and alignment */}
-                            <div className="flex gap-2 self-start md:self-center flex-shrink-0"> 
-                              <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
-                                Details
-                              </Button>
-                              {/* <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-green-600 hover:bg-green-50 hover:text-green-700 border-green-200" // Added hover and border
-                                onClick={() => handleUpdateStatus(submission.id, "approved")}
-                              >
-                                <CheckCircle className="mr-1 h-4 w-4" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200" // Added hover and border
-                                onClick={() => handleUpdateStatus(submission.id, "rejected")}
-                              >
-                                <XCircle className="mr-1 h-4 w-4" />
-                                Reject
-                              </Button> */}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  ))}
+                    {[...Array(3)].map((_, i) => <Card key={i} className="h-24 animate-pulse bg-muted/50"></Card>)}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Approved submissions - Apply similar styling */}
-        <TabsContent value="approved">
-          <Card>
-            <CardHeader>
-              <CardTitle>Approved Submissions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submissions.filter((s) => s.status === "approved").length === 0 ? (
-                renderEmptyState("No approved submissions") // Now correctly calls the function
-              ) : (
-                <div className="space-y-4">
-                  {submissions
-                    .filter((s) => s.status === "approved")
-                    .map((submission) => (
-                      // Added border and hover effect
-                      <Card key={submission.id} className="border hover:shadow-sm transition-shadow duration-200"> 
-                        <CardContent className="p-4">
-                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                            <div className="flex-grow space-y-2"> {/* Added space-y */}
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-base">
-                                  {submission.project_name || "Unknown Project"}
-                                </h3>
-                                {getStatusBadge(submission.status)}
-                              </div>
-                              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                                <FileText className="h-4 w-4" />
-                                Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {submission.participant_count} participants
-                                </Badge>
-                                <span className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  Submitted by 
-                                  <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handlePromoterClick(submission.submitted_by); }}
-                                    className="text-primary hover:underline flex font-medium items-center justify-center"
-                                  >
-                                    {submission.submitted_by_name}
-                                  </a>
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <CalendarDays className="h-3 w-3" />
-                                  {formatDate(submission.submitted_at)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 self-start md:self-center flex-shrink-0">
-                              <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
-                                Details
-                              </Button>
-                            </div>
+            ) : !loading && filteredSubmissions.length === 0 ? (
+                 renderEmptyState(`No ${activeTab === 'all' ? '' : activeTab + ' '}submissions found`)
+            ) : (
+               <div className="space-y-4">
+                {filteredSubmissions.map((submission) => (
+                  <Card key={submission.id} className="border hover:shadow-sm transition-shadow duration-200">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div className="flex-grow space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-base">
+                              {submission.project_name || "Unknown Project"}
+                            </h3>
+                            {getStatusBadge(submission.status)}
                           </div>
-                        </CardContent>
-                      </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Rejected submissions - Apply similar styling */}
-        <TabsContent value="rejected">
-          <Card>
-            <CardHeader>
-              <CardTitle>Rejected Submissions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submissions.filter((s) => s.status === "rejected").length === 0 ? (
-                renderEmptyState("No rejected submissions") // Now correctly calls the function
-              ) : (
-                <div className="space-y-4">
-                  {submissions
-                    .filter((s) => s.status === "rejected")
-                    .map((submission) => (
-                      // Added border and hover effect
-                      <Card key={submission.id} className="border hover:shadow-sm transition-shadow duration-200"> 
-                        <CardContent className="p-4">
-                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                            <div className="flex-grow space-y-2"> {/* Added space-y */}
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-base">
-                                  {submission.project_name || "Unknown Project"}
-                                </h3>
-                                {getStatusBadge(submission.status)}
-                              </div>
-                              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                                <FileText className="h-4 w-4" />
-                                Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {submission.participant_count} participants
-                                </Badge>
-                                <span className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  Submitted by 
-                                  <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handlePromoterClick(submission.submitted_by); }}
-                                    className="text-primary hover:underline flex font-medium items-center justify-center"
-                                  >
-                                    {submission.submitted_by_name}
-                                  </a>
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <CalendarDays className="h-3 w-3" />
-                                  {formatDate(submission.submitted_at)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 self-start md:self-center flex-shrink-0">
-                              <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
-                                Details
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* All submissions - Apply similar styling */}
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Submissions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submissions.length === 0 ? (
-                renderEmptyState("No submissions found") // Now correctly calls the function
-              ) : (
-                <div className="space-y-4">
-                  {submissions.map((submission) => (
-                    // Added border and hover effect
-                    <Card key={submission.id} className="border hover:shadow-sm transition-shadow duration-200"> 
-                      <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                          <div className="flex-grow space-y-2"> {/* Added space-y */}
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-base">
-                                {submission.project_name || "Unknown Project"}
-                              </h3>
-                              {getStatusBadge(submission.status)}
-                            </div>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                              <FileText className="h-4 w-4" />
-                              Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                              <Badge variant="outline" className="flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                {submission.participant_count} participants
-                              </Badge>
-                              <span className="flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                Submitted by 
-                                <a
-                                  href="#"
-                                  onClick={(e) => { e.preventDefault(); handlePromoterClick(submission.submitted_by); }}
-                                  className="text-primary hover:underline flex font-medium items-center justify-center"
-                                >
-                                  {submission.submitted_by_name}
-                                </a>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <CalendarDays className="h-3 w-3" />
-                                {formatDate(submission.submitted_at)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 self-start md:self-center flex-shrink-0">
-                            <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
-                              Details
-                            </Button>
-                            {/* Conditionally show Approve/Reject for pending in 'All' tab
+                          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                            <FileText className="h-4 w-4 shrink-0" />
+                            <span className="truncate">
+                               {submission.community_group_type || "N/A"} • {submission.activity_stream || "N/A"}
+                            </span>
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                             <Badge variant="outline" className="flex items-center gap-1">
+                               <User className="h-3 w-3" />
+                               {submission.participant_count} participants
+                             </Badge>
+                             <span className="flex items-center gap-1">
+                               <User className="h-3 w-3" />
+                               Submitted by
+                               <a
+                                 href="#"
+                                 onClick={(e) => { e.preventDefault(); handlePromoterClick(submission.submitted_by); }}
+                                 className="text-primary hover:underline font-medium ml-1"
+                               >
+                                 {submission.submitted_by_name || 'Unknown User'}
+                               </a>
+                             </span>
+                             <span className="flex items-center gap-1">
+                               <CalendarDays className="h-3 w-3" />
+                               {formatDate(submission.submitted_at)}
+                             </span>
+                           </div>
+                        </div>
+                         <div className="flex gap-2 self-start md:self-center flex-shrink-0">
+                           <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
+                             Details
+                           </Button>
                             {submission.status === 'submitted' && (
                               <>
                                 <Button
@@ -418,6 +213,7 @@ export default function ProjectAdminSubmissionsPage() {
                                   variant="outline"
                                   className="text-green-600 hover:bg-green-50 hover:text-green-700 border-green-200"
                                   onClick={() => handleUpdateStatus(submission.id, "approved")}
+                                  disabled={loading}
                                 >
                                   <CheckCircle className="mr-1 h-4 w-4" />
                                   Approve
@@ -427,23 +223,48 @@ export default function ProjectAdminSubmissionsPage() {
                                   variant="outline"
                                   className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
                                   onClick={() => handleUpdateStatus(submission.id, "rejected")}
+                                  disabled={loading}
                                 >
                                   <XCircle className="mr-1 h-4 w-4" />
                                   Reject
                                 </Button>
                               </>
-                            )} */}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                            )}
+                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+
+            {totalPages > 1 && !loading && (
+                <Pagination className="mt-6">
+                    <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {e.preventDefault(); handlePageChange(currentPage - 1)}}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
+                        />
+                    </PaginationItem>
+                     <PaginationItem>
+                        <span className="px-4 py-2 text-sm">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                    </PaginationItem>
+                    <PaginationItem>
+                        <PaginationNext
+                        href="#"
+                        onClick={(e) => {e.preventDefault(); handlePageChange(currentPage + 1)}}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
+                        />
+                    </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
