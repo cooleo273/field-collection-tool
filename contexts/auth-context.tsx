@@ -30,25 +30,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const router = useRouter()
 
+  // Function to check session from localStorage
+  const getSessionFromLocalStorage = () => {
+    const session = localStorage.getItem('supabase_session')
+    if (session) {
+      return JSON.parse(session)
+    }
+    return null
+  }
+
+  // Function to save session in localStorage
+  const saveSessionToLocalStorage = (session: any) => {
+    localStorage.setItem('supabase_session', JSON.stringify(session))
+  }
+
+  // Function to initialize auth state
   const initAuth = async () => {
     setIsLoading(true)
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      const sessionFromStorage = getSessionFromLocalStorage()
 
-      if (sessionError) {
-        console.error("Error getting session:", sessionError)
-        setIsLoading(false)
-        return
-      }
-
-      if (session?.user) {
-        setUser(session.user)
-        // Fetch user profile
-        const profile = await fetchUserProfile(session.user.id)
-        setUserProfile(profile)
+      if (sessionFromStorage) {
+        const { user, expires_at } = sessionFromStorage
+        if (expires_at > Date.now() / 1000) { // Check if session is valid
+          setUser(user)
+          const profile = await fetchUserProfile(user.id)
+          setUserProfile(profile)
+        } else {
+          // Expired session, remove it from localStorage
+          localStorage.removeItem('supabase_session')
+          setUser(null)
+          setUserProfile(null)
+        }
       } else {
-        setUser(null)
-        setUserProfile(null)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error("Error getting session:", sessionError)
+          setIsLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          setUser(session.user)
+          saveSessionToLocalStorage(session) // Store session in localStorage
+          const profile = await fetchUserProfile(session.user.id)
+          setUserProfile(profile)
+        } else {
+          setUser(null)
+          setUserProfile(null)
+        }
       }
     } catch (error) {
       console.error("Error initializing auth:", error)
@@ -77,26 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check session when component mounts
     initAuth()
-
-    // Recheck the session whenever the page comes into focus
-    const handleFocus = () => {
-      initAuth()
-    }
-
-    // Recheck the session when visibility changes (user navigates back to the app)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        initAuth()
-      }
-    }
-
-    window.addEventListener("focus", handleFocus)
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-
-    return () => {
-      window.removeEventListener("focus", handleFocus)
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
@@ -112,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data?.user) {
         const profile = await fetchUserProfile(data.user.id)
         setUserProfile(profile)
+        saveSessionToLocalStorage(data) // Store the session in localStorage
         router.push("/dashboard") // Or redirect based on role
       }
 
@@ -127,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setIsLoading(true)
     await supabase.auth.signOut()
+    localStorage.removeItem('supabase_session') // Clear session from localStorage
     setUser(null)
     setUserProfile(null)
     router.push("/")
