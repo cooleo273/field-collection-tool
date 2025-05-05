@@ -1,10 +1,7 @@
 "use client"
-
-import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/services/client"
+import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 
 type UserProfile = {
@@ -31,97 +28,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   
-  // Make sure your auth initialization sets isLoading to false when complete
-  
   const router = useRouter()
 
-  // Function to fetch user profile
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      
-      // First, check if the user exists in the users table
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("id, name, email, role, phone, status")
-        .eq("id", userId)
-        .single()
-
-      if (userError) {
-        console.error("Error fetching user from users table:", userError.message, userError.details)
-        
-        // Get current user from auth
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-        
-        if (authError) {
-          console.error("Error getting auth user:", authError)
-          return null
-        }
-
-        if (authUser) {
-           
-          const { data: newUser, error: createError } = await supabase
-            .from("users")
-            .insert([
-              {
-                id: userId,
-                email: authUser.email,
-                name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-                role: "promoter", // Changed default role to promoter
-                status: "active"
-              }
-            ])
-            .select("id, name, email, role, phone, status")
-            .single()
-
-          if (createError) {
-            console.error("Error creating user profile:", createError.message, createError.details)
-            return null
-          }
-
-           
-          return newUser as UserProfile
-        }
-        return null
-      }
-
-      if (!userData) {
-        console.error("No user data found in database")
-        return null
-      }
-      return userData as UserProfile
-    } catch (error) {
-      console.error("Error in fetchUserProfile:", error instanceof Error ? error.message : error)
-      return null
+  // Function to check session from localStorage
+  const getSessionFromLocalStorage = () => {
+    const session = localStorage.getItem('supabase_session')
+    if (session) {
+      return JSON.parse(session)
     }
+    return null
+  }
+
+  // Function to save session in localStorage
+  const saveSessionToLocalStorage = (session: any) => {
+    localStorage.setItem('supabase_session', JSON.stringify(session))
   }
 
   // Function to initialize auth state
   const initAuth = async () => {
+    setIsLoading(true)
     try {
-      setIsLoading(true)
+      const sessionFromStorage = getSessionFromLocalStorage()
 
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-      if (sessionError) {
-        console.error("Error getting session:", sessionError)
-        setIsLoading(false)
-        return
-      }
-
-      if (session?.user) {
-        setUser(session.user)
-
-        // Fetch user profile
-        const profile = await fetchUserProfile(session.user.id)
-        if (profile) {
+      if (sessionFromStorage) {
+        const { user, expires_at } = sessionFromStorage
+        if (expires_at > Date.now() / 1000) { // Check if session is valid
+          setUser(user)
+          const profile = await fetchUserProfile(user.id)
           setUserProfile(profile)
         } else {
-          console.error("Failed to fetch user profile")
+          // Expired session, remove it from localStorage
+          localStorage.removeItem('supabase_session')
+          setUser(null)
+          setUserProfile(null)
         }
       } else {
-        setUser(null)
-        setUserProfile(null)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error("Error getting session:", sessionError)
+          setIsLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          setUser(session.user)
+          saveSessionToLocalStorage(session) // Store session in localStorage
+          const profile = await fetchUserProfile(session.user.id)
+          setUserProfile(profile)
+        } else {
+          setUser(null)
+          setUserProfile(null)
+        }
       }
     } catch (error) {
       console.error("Error initializing auth:", error)
@@ -130,87 +88,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Initialize auth state on mount
-  useEffect(() => {
-    initAuth()
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, name, email, role, phone, status")
+        .eq("id", userId)
+        .single()
 
-    // Set up auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      
-      if (event === "SIGNED_IN") {
-        if (session?.user) {
-          setUser(session.user)
-          const profile = await fetchUserProfile(session.user.id)
-          if (profile) {
-            setUserProfile(profile)
-          }
-        }
-      } else if (event === "SIGNED_OUT") {
-        setUser(null)
-        setUserProfile(null)
-      }
-    })
+      if (error) throw error
 
-    // Clean up subscription
-    return () => {
-      subscription.unsubscribe()
+      return data
+    } catch (error) {
+      console.error("Error fetching user profile:", error)
+      return null
     }
+  }
+
+  useEffect(() => {
+    // Check session when component mounts
+    initAuth()
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    setIsLoading(true)
     try {
-      setIsLoading(true)
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
-        console.error("Supabase auth error:", error)
+        console.error("Sign-in error:", error)
         return { error: { message: error.message } }
       }
 
-      if (!data?.user) {
-        console.error("No user data returned from Supabase auth")
-        return { error: { message: "No user returned from sign in" } }
-      }
-
-      // Fetch user profile
-      const profile = await fetchUserProfile(data.user.id)
-      if (!profile) {
-        return { error: { message: "Could not fetch user profile" } }
-      }
-
-      setUserProfile(profile)
-      if (profile.role === "admin") {
-        router.push("/admin")
-      } else if (profile.role === "project-admin") {
-        router.push("/dashboard")
-      } else {
-        router.push("/submissions")
+      if (data?.user) {
+        const profile = await fetchUserProfile(data.user.id)
+        setUserProfile(profile)
+        saveSessionToLocalStorage(data) // Store the session in localStorage
+        router.push("/dashboard") // Or redirect based on role
       }
 
       return {}
-    } catch (error) {
-      console.error("Error in signIn function:", error)
-      return { error: { message: error instanceof Error ? error.message : "An unexpected error occurred" } }
+    } catch (error: any) {
+      console.error("Error during sign-in:", error)
+      return { error: { message: error.message } }
     } finally {
       setIsLoading(false)
     }
   }
 
   const signOut = async () => {
-    try {
-      setIsLoading(true)
-      await supabase.auth.signOut()
-      router.push("/")
-    } catch (error) {
-      console.error("Error signing out:", error)
-    } finally {
-      setIsLoading(false)
-    }
+    setIsLoading(true)
+    await supabase.auth.signOut()
+    localStorage.removeItem('supabase_session') // Clear session from localStorage
+    setUser(null)
+    setUserProfile(null)
+    router.push("/")
+    setIsLoading(false)
   }
 
   const value = {
@@ -226,9 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
 }
-
