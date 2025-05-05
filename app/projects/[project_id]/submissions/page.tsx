@@ -167,7 +167,7 @@ export default function ProjectAdminSubmissionsPage() {
                               </div>
                               <p className="text-sm text-muted-foreground flex items-center gap-1.5"> {/* Added flex for icon alignment */}
                                 <FileText className="h-4 w-4" /> {/* Icon */}
-                                Location: {renderField(submission.location, "Unknown Location")} • {submission.community_group_type || "N/A"}
+                                Community Group : {submission.community_group_type || "N/A"} • {submission.activity_stream || "N/A"}
                               </p>
                               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground"> {/* Use flex-wrap */}
                                 <Badge variant="outline" className="flex items-center gap-1"> {/* Icon in badge */}
@@ -196,7 +196,7 @@ export default function ProjectAdminSubmissionsPage() {
                               <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
                                 Details
                               </Button>
-                              <Button
+                              {/* <Button
                                 size="sm"
                                 variant="outline"
                                 className="text-green-600 hover:bg-green-50 hover:text-green-700 border-green-200" // Added hover and border
@@ -213,7 +213,7 @@ export default function ProjectAdminSubmissionsPage() {
                               >
                                 <XCircle className="mr-1 h-4 w-4" />
                                 Reject
-                              </Button>
+                              </Button> */}
                             </div>
                           </div>
                         </CardContent>
@@ -410,7 +410,7 @@ export default function ProjectAdminSubmissionsPage() {
                             <Button variant="outline" size="sm" onClick={() => handleViewDetails(submission.id)}>
                               Details
                             </Button>
-                            {/* Conditionally show Approve/Reject for pending in 'All' tab */}
+                            {/* Conditionally show Approve/Reject for pending in 'All' tab
                             {submission.status === 'submitted' && (
                               <>
                                 <Button
@@ -432,7 +432,7 @@ export default function ProjectAdminSubmissionsPage() {
                                   Reject
                                 </Button>
                               </>
-                            )}
+                            )} */}
                           </div>
                         </div>
                       </CardContent>

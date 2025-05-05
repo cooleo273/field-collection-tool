@@ -341,7 +341,7 @@ export default function NewSubmissionPage() {
         title: "Submission Successful",
         description: "Field data has been recorded successfully for the selected promoter.",
       });
-      router.push("/submissions");
+      router.push("/dashboard");
 
     } catch (error: any) {
       clearTimeout(submissionTimeout);

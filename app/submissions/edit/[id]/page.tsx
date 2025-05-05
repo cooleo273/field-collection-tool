@@ -215,20 +215,31 @@ export default function EditSubmissionPage() {
 
     setIsSubmitting(true);
     try {
-      // Update the submission
-      const updatedSubmission = await updateSubmission(submission.id, {
+      // Create update object with proper typing
+      const updateData: any = {
         activity_stream: values.activity_stream,
         specific_location: values.specific_location,
         community_group_type: values.community_group_type,
         participant_count: values.participant_count,
         key_issues: values.key_issues,
-        status: submission.status,
         pre_session_dfs_level: values.pre_session_dfs_level,
         post_session_dfs_improvement: values.post_session_dfs_improvement,
         estimated_dfs_adoption_count: values.estimated_dfs_adoption_count,
+      };
 
-        // Remove updated_at as it's handled by the updateSubmission function
-      });
+      // If the submission was rejected, change status back to "submitted"
+      // and clear the rejection-related fields
+      if (submission.status === "rejected") {
+        updateData.status = "submitted";
+        updateData.review_notes = null;
+        updateData.reviewed_by = null;
+        updateData.reviewed_at = null;
+      } else {
+        updateData.status = submission.status;
+      }
+
+      // Update the submission
+      const updatedSubmission = await updateSubmission(submission.id, updateData);
 
       // Handle new photos (only the ones not in existingPhotos)
       const newPhotos = values.images.filter(
