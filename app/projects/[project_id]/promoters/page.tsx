@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { Plus, Pencil, Trash2, UserPlus, MapPin } from "lucide-react"
+import { Plus, Pencil, Trash2, UserPlus, MapPin, FileDown, FileText, Download } from "lucide-react"
 import { getUsers, deleteUser, getProjectPromoters } from "@/lib/services/users"
 import { AddPromoterDialog } from "@/components/admin/add-promoter-dialog"
 import { EditUserDialog } from "@/components/admin/edit-user-dialog"
@@ -22,11 +22,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { useProject } from "@/contexts/project-context"
 import { useRouter } from "next/navigation";
 import { getSubmissionCountByPromoterId } from "@/lib/services/submissions";
+
+// Import Excel export library
+import * as XLSX from 'xlsx';
+// Import PDF library if needed
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function ProjectAdminPromotersPage() {
   const router = useRouter();
@@ -177,6 +189,88 @@ export default function ProjectAdminPromotersPage() {
     }
   }
 
+  // Function to export promoters to Excel
+  const exportToExcel = () => {
+    try {
+      // Create a worksheet with formatted data
+      const worksheet = XLSX.utils.json_to_sheet(
+        promoters.map(promoter => ({
+          'Name': promoter.name,
+          'Email': promoter.email,
+          'Status': promoter.status,
+          'Submissions': promoter.submissionCount || 0
+        }))
+      );
+      
+      // Create a workbook and add the worksheet
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Promoters');
+      
+      // Generate Excel file and trigger download
+      const projectName = currentProject?.name || 'project';
+      const fileName = `${projectName.replace(/\s+/g, '_')}_promoters_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      
+      toast({
+        title: "Export Successful",
+        description: "Promoters list has been exported to Excel.",
+      });
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export Failed",
+        description: "There was a problem exporting the data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Function to export promoters to PDF
+  const exportToPDF = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      const projectName = currentProject?.name || 'Project';
+      doc.setFontSize(16);
+      doc.text(`${projectName} - Promoters List`, 14, 15);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+      
+      // Convert data to array format suitable for autoTable
+      const tableData = promoters.map(promoter => [
+        promoter.name,
+        promoter.email,
+        promoter.status,
+        promoter.submissionCount || 0
+      ]);
+      
+      // Add table
+      (doc as any).autoTable({
+        startY: 30,
+        head: [['Name', 'Email', 'Status', 'Submissions']],
+        body: tableData,
+        headStyles: { fillColor: [66, 133, 244] }
+      });
+      
+      // Save PDF
+      const fileName = `${projectName.replace(/\s+/g, '_')}_promoters_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+      
+      toast({
+        title: "Export Successful",
+        description: "Promoters list has been exported to PDF.",
+      });
+    } catch (error) {
+      console.error("Error exporting to PDF:", error);
+      toast({
+        title: "Export Failed",
+        description: "There was a problem exporting the data.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -192,10 +286,31 @@ export default function ProjectAdminPromotersPage() {
           <h1 className="page-title">Promoters</h1>
           <p className="page-description">Manage field data collectors for your campaigns</p>
         </div>
-        <Button onClick={() => setShowAddDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Promoter
-        </Button>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToExcel}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export to Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToPDF}>
+                <FileText className="mr-2 h-4 w-4" />
+                Export to PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Promoter
+          </Button>
+        </div>
       </div>
 
       <Card>

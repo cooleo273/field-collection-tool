@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // List of public routes that don't require authentication
-const publicRoutes = ["/login", "/reset-password", "/forgot-password"];
+const publicRoutes = ["/login", "/reset-password", "/forgot-password", "/"];
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -26,6 +26,11 @@ export async function middleware(req: NextRequest) {
 
     // Redirect to dashboard if authenticated and trying to access login page
     if (session && pathname === "/login") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // If authenticated and on root route, redirect to dashboard
+    if (session && pathname === "/") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

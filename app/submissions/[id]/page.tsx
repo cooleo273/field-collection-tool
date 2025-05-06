@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { LoadingSpinner } from "@/components/loading-spinner"
-// Added ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown
-import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown }
+// Added ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Download, Filter
+import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Download, Filter }
 from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
@@ -555,6 +555,137 @@ export default function SubmissionDetailsPage() {
     };
      // --- End Handle Status Update ---
 
+    // Add export function
+    const handleExportParticipants = async () => {
+        if (!submission?.id) {
+            toast({ title: "Error", description: "Submission ID is missing.", variant: "destructive"});
+            return;
+        }
+
+        try {
+            // Fetch all participants for this submission
+            const { data: allParticipants, error } = await supabase
+                .from("participants")
+                .select("name, age, phone_number, gender")
+                .eq("submission_id", submission.id)
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                throw error;
+            }
+
+            if (!allParticipants || allParticipants.length === 0) {
+                toast({
+                    title: "No Data",
+                    description: "No participants found to export.",
+                    variant: "default"
+                });
+                return;
+            }
+
+            // Create CSV content
+            const headers = ["Name", "Age", "Phone Number", "Gender"];
+            const csvContent = [
+                headers.join(","),
+                ...allParticipants.map(p => [
+                    `"${p.name}"`,
+                    p.age,
+                    `"${p.phone_number}"`,
+                    `"${p.gender}"`
+                ].join(","))
+            ].join("\n");
+
+            // Create and trigger download
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `participants_${submission.id}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast({
+                title: "Export Successful",
+                description: "Participants list has been exported successfully.",
+                variant: "default"
+            });
+        } catch (error: any) {
+            console.error("Error exporting participants:", error);
+            toast({
+                title: "Export Failed",
+                description: error?.message || "Failed to export participants list.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    // Add age-specific export function
+    const handleExportByAge = async (minAge: number, maxAge: number) => {
+        if (!submission?.id) {
+            toast({ title: "Error", description: "Submission ID is missing.", variant: "destructive"});
+            return;
+        }
+
+        try {
+            // Fetch participants within the age range
+            const { data: ageFilteredParticipants, error } = await supabase
+                .from("participants")
+                .select("name, age, phone_number, gender")
+                .eq("submission_id", submission.id)
+                .gte("age", minAge)
+                .lte("age", maxAge)
+                .order('age', { ascending: true });
+
+            if (error) {
+                throw error;
+            }
+
+            if (!ageFilteredParticipants || ageFilteredParticipants.length === 0) {
+                toast({
+                    title: "No Data",
+                    description: `No participants found in the age range ${minAge}-${maxAge}.`,
+                    variant: "default"
+                });
+                return;
+            }
+
+            // Create CSV content
+            const headers = ["Name", "Age", "Phone Number", "Gender"];
+            const csvContent = [
+                headers.join(","),
+                ...ageFilteredParticipants.map(p => [
+                    `"${p.name}"`,
+                    p.age,
+                    `"${p.phone_number}"`,
+                    `"${p.gender}"`
+                ].join(","))
+            ].join("\n");
+
+            // Create and trigger download
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `participants_age_${minAge}-${maxAge}_${submission.id}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast({
+                title: "Export Successful",
+                description: `Participants aged ${minAge}-${maxAge} have been exported successfully.`,
+                variant: "default"
+            });
+        } catch (error: any) {
+            console.error("Error exporting participants by age:", error);
+            toast({
+                title: "Export Failed",
+                description: error?.message || "Failed to export participants list.",
+                variant: "destructive"
+            });
+        }
+    };
 
     if (loading && !submission) { // Show main loading indicator only on initial load
         return (
@@ -891,11 +1022,55 @@ export default function SubmissionDetailsPage() {
                 <div className="space-y-6">
                     <Card className="border-2 shadow-lg rounded-lg overflow-hidden">
                         <CardHeader className="pb-4 bg-muted/30">
-                            <CardTitle className="text-lg font-semibold text-primary">Participants List</CardTitle>
-                            {/* Display actual count vs expected */}
-                            <p className="text-sm text-muted-foreground">
-                                {`${totalParticipantsCount} / ${submission?.participant_count || 0} participants added`}
-                            </p>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="text-lg font-semibold text-primary">Participants List</CardTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                        {`${totalParticipantsCount} / ${submission?.participant_count || 0} participants added`}
+                                    </p>
+                                </div>
+                                {/* Export Buttons */}
+                                {submittedParticipantsList.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleExportByAge(0, 18)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Filter className="h-4 w-4" />
+                                            Export (0-18)
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleExportByAge(19, 35)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Filter className="h-4 w-4" />
+                                            Export (19-35)
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleExportByAge(36, 100)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Filter className="h-4 w-4" />
+                                            Export (36+)
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleExportParticipants}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Export All
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent className="p-0"> {/* Remove padding for table/list */}
                             {/* Loading state for participants */}
