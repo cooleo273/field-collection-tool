@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight } from "lucide-react" // Added ChevronLeft, ChevronRight
+import { ArrowLeft, Clock, MapPin, Users, FileText, CheckCircle, XCircle, AlertTriangle, Calendar, Tag, Trash, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, Download, Filter } from "lucide-react" // Added ChevronLeft, ChevronRight, Download, Filter
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
 import { getSupabaseClient } from "@/lib/services/client"
@@ -507,6 +507,100 @@ export default function SubmissionDetailsPage() {
     const totalPages = Math.ceil(totalParticipantsCount / PARTICIPANTS_PAGE_SIZE);
     // --- End Pagination Handlers ---
 
+    // Add export functions
+    const handleExportParticipants = async (format: 'excel' | 'pdf') => {
+        if (!submission?.id) {
+            toast({ title: "Error", description: "Submission ID is missing.", variant: "destructive"});
+            return;
+        }
+
+        try {
+            // Fetch all participants for this submission
+            const { data: allParticipants, error } = await supabase
+                .from("participants")
+                .select("name, age, phone_number, gender")
+                .eq("submission_id", submission.id)
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                throw error;
+            }
+
+            if (!allParticipants || allParticipants.length === 0) {
+                toast({
+                    title: "No Data",
+                    description: "No participants found to export.",
+                    variant: "default"
+                });
+                return;
+            }
+
+            if (format === 'excel') {
+                // Create Excel workbook
+                const XLSX = await import('xlsx');
+                const worksheet = XLSX.utils.json_to_sheet(allParticipants);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Participants");
+                
+                // Generate Excel file
+                XLSX.writeFile(workbook, `participants_${submission.id}_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+                toast({
+                    title: "Export Successful",
+                    description: "Participants list has been exported to Excel successfully.",
+                    variant: "default"
+                });
+            } else if (format === 'pdf') {
+                // Import PDF libraries
+                const { jsPDF } = await import('jspdf');
+                const autoTable = (await import('jspdf-autotable')).default;
+
+                // Create PDF document
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(16);
+                doc.text("Participants List", 14, 15);
+                
+                // Add submission details
+                doc.setFontSize(10);
+                doc.text(`Submission ID: ${submission.id}`, 14, 25);
+                doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 14, 30);
+                
+                // Add table
+                autoTable(doc, {
+                    startY: 35,
+                    head: [['Name', 'Age', 'Phone Number', 'Gender']],
+                    body: allParticipants.map(p => [p.name, p.age, p.phone_number, p.gender]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                    styles: { fontSize: 10, cellPadding: 3 },
+                    columnStyles: {
+                        0: { cellWidth: 60 },
+                        1: { cellWidth: 20 },
+                        2: { cellWidth: 40 },
+                        3: { cellWidth: 30 }
+                    }
+                });
+
+                // Save PDF
+                doc.save(`participants_${submission.id}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+                toast({
+                    title: "Export Successful",
+                    description: "Participants list has been exported to PDF successfully.",
+                    variant: "default"
+                });
+            }
+        } catch (error: any) {
+            console.error("Error exporting participants:", error);
+            toast({
+                title: "Export Failed",
+                description: error?.message || "Failed to export participants list.",
+                variant: "destructive"
+            });
+        }
+    };
 
     if (loading && !submission) { // Show main loading only initially
         return (
@@ -763,15 +857,7 @@ export default function SubmissionDetailsPage() {
                                       </p>
                                     </div>
                                 </li>
-                                <li className="flex items-start">
-                                    <div className="bg-primary/10 p-2 rounded-full mr-3 flex-shrink-0"> {/* Added flex-shrink-0 */}
-                                    <FileText className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <div>
-                                    <p className="text-sm font-medium">Submission ID</p>
-                                    <p className="text-sm text-muted-foreground font-mono break-all">{submission.id}</p> {/* Added break-all */}
-                                    </div>
-                                </li>
+                        
                                 <li className="flex items-start">
                                     <div className="bg-primary/10 p-2 rounded-full mr-3 flex-shrink-0"> {/* Added flex-shrink-0 */}
                                     <Clock className="h-5 w-5 text-primary" />
@@ -793,11 +879,37 @@ export default function SubmissionDetailsPage() {
                 <div className="space-y-6">
                     <Card className="border-2 shadow-lg rounded-lg overflow-hidden">
                         <CardHeader className="pb-4 bg-muted/30">
-                            <CardTitle className="text-lg font-semibold text-primary">Participants</CardTitle>
-                             {/* Display actual count vs expected */}
-                            <p className="text-sm text-muted-foreground">
-                                {`${totalParticipantsCount} / ${submission?.participant_count || 0} participants added`}
-                            </p>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="text-lg font-semibold text-primary">Participants</CardTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                        {`${totalParticipantsCount} / ${submission?.participant_count || 0} participants added`}
+                                    </p>
+                                </div>
+                                {/* Export Buttons */}
+                                {submittedParticipantsList.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleExportParticipants('excel')}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Export Excel
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleExportParticipants('pdf')}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Export PDF
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent className="p-0"> {/* Remove default padding */}
                             {isLoadingParticipants && (

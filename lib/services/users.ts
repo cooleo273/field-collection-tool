@@ -497,23 +497,29 @@ export async function getUserCount() {
  * Reset a user's password
  * This will send a password reset email to the user
  */
-export async function resetUserPassword(id: string) {
+export async function resetUserPassword(userId: string, directReset?: boolean, newPassword?: string) {
   try {
-    // Call the server-side API endpoint to reset the password
-    const response = await fetch(`/api/users/${id}/reset-password`, {
+    const response = await fetch(`/api/users/${userId}/reset-password`, {
       method: 'POST',
-    });
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        directReset,
+        newPassword,
+      }),
+    })
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to reset password");
+      throw new Error(data.error || 'Failed to reset password')
     }
 
-    return data.message;
+    return data.message
   } catch (error) {
-    console.error("Error in resetUserPassword:", error);
-    throw error instanceof Error ? error : new Error("Unknown error occurred while resetting password");
+    console.error('Error resetting password:', error)
+    throw error
   }
 }
 
@@ -581,15 +587,22 @@ export async function getProjectPromoters(projectId: string) {
     }
 
     // Transform the data to match the expected format
-    return data?.map(item => ({
-      id: item.user_id, // Use user_id as the id
-      name: item.users?.name,
-      email: item.users?.email,
-      status: item.users?.status,
-      role: item.users?.role,
-      assignedLocations: item.project_promoter_locations || [],
-      submissions: [] // Return empty array for submissions since it's not available
-    })) || [];
+    if (!data) return [];
+    
+    return data.map(item => {
+      // First, ensure we access 'users' object correctly, not as an array
+      const userData = (item.users as any) || {};
+      
+      return {
+        id: item.user_id, // Use user_id as the id
+        name: userData.name,
+        email: userData.email,
+        status: userData.status,
+        role: userData.role,
+        assignedLocations: item.project_promoter_locations || [],
+        submissions: [] // Return empty array for submissions since it's not available
+      };
+    });
   } catch (error) {
     console.error("Error in getProjectPromoters:", error);
     throw error;

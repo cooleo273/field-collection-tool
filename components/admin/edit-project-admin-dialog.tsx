@@ -30,7 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { updateUser } from "@/lib/services/users"
+import { updateUser, resetUserPassword } from "@/lib/services/users"
+import { KeyRound } from "lucide-react"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -55,6 +56,7 @@ export function EditProjectAdminDialog({
 }: EditProjectAdminDialogProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -85,6 +87,26 @@ export function EditProjectAdminDialog({
       })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleResetPassword() {
+    try {
+      setIsResettingPassword(true)
+      const message = await resetUserPassword(admin.id)
+      toast({
+        title: "Password Reset Email Sent",
+        description: message,
+      })
+    } catch (error) {
+      console.error("Error resetting password:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to reset password",
+        variant: "destructive",
+      })
+    } finally {
+      setIsResettingPassword(false)
     }
   }
 
@@ -149,12 +171,21 @@ export function EditProjectAdminDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <div className="pt-2">
               <Button
-                type="submit"
-                disabled={isSubmitting}
+                type="button"
+                variant="outline"
+                onClick={handleResetPassword}
+                disabled={isResettingPassword}
+                className="w-full"
               >
-                {isSubmitting ? "Updating..." : "Update Admin"}
+                <KeyRound className="mr-2 h-4 w-4" />
+                {isResettingPassword ? "Sending Reset Email..." : "Send Password Reset Email"}
+              </Button>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

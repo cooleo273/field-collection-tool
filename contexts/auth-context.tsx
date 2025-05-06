@@ -27,59 +27,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [lastSignInAttempt, setLastSignInAttempt] = useState<number>(0)
+  const RATE_LIMIT_WINDOW = 1000 // 1 second between attempts
   
   const router = useRouter()
-
-  // Function to check session from localStorage
-  const getSessionFromLocalStorage = () => {
-    const session = localStorage.getItem('supabase_session')
-    if (session) {
-      return JSON.parse(session)
-    }
-    return null
-  }
-
-  // Function to save session in localStorage
-  const saveSessionToLocalStorage = (session: any) => {
-    localStorage.setItem('supabase_session', JSON.stringify(session))
-  }
 
   // Function to initialize auth state
   const initAuth = async () => {
     setIsLoading(true)
     try {
-      const sessionFromStorage = getSessionFromLocalStorage()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-      if (sessionFromStorage) {
-        const { user, expires_at } = sessionFromStorage
-        if (expires_at > Date.now() / 1000) { // Check if session is valid
-          setUser(user)
-          const profile = await fetchUserProfile(user.id)
-          setUserProfile(profile)
-        } else {
-          // Expired session, remove it from localStorage
-          localStorage.removeItem('supabase_session')
-          setUser(null)
-          setUserProfile(null)
-        }
+      if (sessionError) {
+        console.error("Error getting session:", sessionError)
+        setIsLoading(false)
+        return
+      }
+
+      if (session?.user) {
+        setUser(session.user)
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
       } else {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-        if (sessionError) {
-          console.error("Error getting session:", sessionError)
-          setIsLoading(false)
-          return
-        }
-
-        if (session?.user) {
-          setUser(session.user)
-          saveSessionToLocalStorage(session) // Store session in localStorage
-          const profile = await fetchUserProfile(session.user.id)
-          setUserProfile(profile)
-        } else {
-          setUser(null)
-          setUserProfile(null)
-        }
+        setUser(null)
+        setUserProfile(null)
       }
     } catch (error) {
       console.error("Error initializing auth:", error)
@@ -87,6 +58,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    // Initialize auth state
+    initAuth()
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
+      } else {
+        setUser(null)
+        setUserProfile(null)
+      }
+      setIsLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -105,26 +98,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    // Check session when component mounts
-    initAuth()
-  }, [])
-
   const signIn = async (email: string, password: string) => {
+    const now = Date.now()
+    if (now - lastSignInAttempt < RATE_LIMIT_WINDOW) {
+      return { 
+        error: { 
+          message: "Please wait a moment before trying again" 
+        } 
+      }
+    }
+    
+    setLastSignInAttempt(now)
     setIsLoading(true)
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         console.error("Sign-in error:", error)
+        if (error.message.includes("rate limit")) {
+          return { 
+            error: { 
+              message: "Too many attempts. Please wait a moment before trying again." 
+            } 
+          }
+        }
         return { error: { message: error.message } }
       }
 
       if (data?.user) {
         const profile = await fetchUserProfile(data.user.id)
         setUserProfile(profile)
-        saveSessionToLocalStorage(data) // Store the session in localStorage
-        router.push("/dashboard") // Or redirect based on role
+        router.push("/dashboard")
       }
 
       return {}
@@ -139,7 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setIsLoading(true)
     await supabase.auth.signOut()
-    localStorage.removeItem('supabase_session') // Clear session from localStorage
     setUser(null)
     setUserProfile(null)
     router.push("/")
