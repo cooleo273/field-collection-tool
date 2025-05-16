@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -41,9 +41,11 @@ type FormValues = z.infer<typeof formSchema>
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -53,12 +55,40 @@ export default function ResetPasswordPage() {
     },
   })
 
+  // Verify the reset token when the component mounts
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        // Check if we have the necessary parameters in the URL
+        // Supabase adds these automatically when the user clicks the reset link
+        const hasParams = searchParams.has('type') && 
+                         searchParams.has('access_token') && 
+                         searchParams.get('type') === 'recovery';
+        
+        if (!hasParams) {
+          setError("Invalid or expired password reset link. Please request a new one.");
+          setIsTokenValid(false);
+          return;
+        }
+        
+        setIsTokenValid(true);
+      } catch (error) {
+        console.error("Error verifying reset token:", error);
+        setError("Invalid or expired password reset link. Please request a new one.");
+        setIsTokenValid(false);
+      }
+    };
+
+    verifyToken();
+  }, [searchParams]);
+
   const onSubmit = async (values: FormValues) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     setError(null)
 
     try {
+      // Use the hash fragment from the URL which contains the access token
       const { error } = await supabase.auth.updateUser({
         password: values.password
       })
@@ -74,10 +104,51 @@ export default function ResetPasswordPage() {
       router.push("/login")
     } catch (error) {
       console.error("Error resetting password:", error)
-      setError("Failed to reset password. Please try again.")
+      setError("Failed to reset password. Please try again or request a new reset link.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Show loading or error state while verifying token
+  if (isTokenValid === null) {
+    return (
+      <div className="container flex h-screen w-screen flex-col items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+            <p className="text-center mt-4">Verifying your reset link...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error if token is invalid
+  if (isTokenValid === false) {
+    return (
+      <div className="container flex h-screen w-screen flex-col items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">Reset Failed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <div className="mt-6 text-center">
+              <Link href="/forgot-password">
+                <Button>Request New Reset Link</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -170,4 +241,4 @@ export default function ResetPasswordPage() {
       </Card>
     </div>
   )
-} 
+}
